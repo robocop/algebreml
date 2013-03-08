@@ -9,17 +9,36 @@ module type DRing = sig
     val print : elem -> string
 end
 
+module Integers = 
+  struct
+    let rec gcd a b = if a mod b = 0 then b else gcd b (a mod b);;
+    let ppcm a b = a * b / (gcd a b)
+    let ppcm_list = List.fold_left ppcm 1
+    let div n = 
+      let rec div n k = 
+	if k*k > n then []
+	else 
+	  (if n mod k = 0 then 
+	      if n/k <> k then [k;-k;n/k;-n/k]
+	      else [k;-k]
+	   else [])@div n (k+1)
+      in
+      div (abs n) 1
+  end
+
+
+
 
 module Rationnal =
     struct
       type rat = int * int
-      let rec gcd a b = if a mod b = 0 then b else gcd b (a mod b);;
+	  
       let normalise ((x,y):rat) =  
 	if y = 0 then raise Division_by_zero
 	else
 	  let s = if x*y >= 0 then 1 else -1 in
 	  let x' = abs x in let y' = abs y in
-	  let d = gcd x' y' in 
+	  let d = Integers.gcd x' y' in 
 	  ( (s * (x'/d), y'/d) : rat)
       ;;
       let mult ((x,y):rat) ((x',y'):rat) = normalise (x*x', y*y');;
@@ -47,12 +66,13 @@ module Poly =
   functor ( C : DRing) -> 
    struct 
      exception Empty;;
-     type polynome = (C.elem * int) list
+     type polynom = (C.elem * int) list
      let zero = [(C.zero), 0]
      let one = [(C.one), 0]
-     let normalise (poly:polynome) = 
+     let x = [(C.one), 1]
+     let normalise (poly:polynom) = 
        let p' = List.sort (fun (x, a) (y, b) -> compare a b) poly in
-       let rec simpl (p:polynome)= match p with 
+       let rec simpl (p:polynom)= match p with 
 	   [] -> []
 	 | (a, _)::r when a = C.zero -> simpl r
 	 | (a, n)::(b, m)::r when n == m -> (C.add a b, m)::simpl r
@@ -60,9 +80,9 @@ module Poly =
        in
        ((match simpl p' with
 	 | [] -> zero
-	 | p -> p):polynome)
+	 | p -> p):polynom)
      ;;
-     let print (p:polynome) = 
+     let print (p:polynom) = 
        let print_monome (x, d) = Printf.sprintf "%sX^%d" (C.print x) d in
        let rec print = function
 	 | [] -> ""
@@ -71,7 +91,7 @@ module Poly =
        in
        print p     
      ;;  
-     let add (p1:polynome) (p2:polynome) = 
+     let add (p1:polynom) (p2:polynom) = 
        let rec sum_p p1 p2 = match (p1, p2) with
 	   ([], p) -> p
 	 | (p, []) -> p
@@ -81,17 +101,18 @@ module Poly =
        in
        normalise (sum_p p1 p2)
      ;;
-     let minus (p:polynome) = (List.map (fun (a, d) -> (C.minus a, d)) p : polynome);;
-     let rec mult_monome (a, d) (p:polynome) = match p with
+     let minus (p:polynom) = (List.map (fun (a, d) -> (C.minus a, d)) p : polynom);;
+     let rec mult_monome (a, d) (p:polynom) = match p with
 	 [] -> []
        | (a', d')::p' -> normalise ((C.mult a a', d+d')::mult_monome (a, d) p')
      ;;
-     let rec mult (p1:polynome) (p2:polynome) = match p1 with
+     let rec mult (p1:polynom) (p2:polynom) = match p1 with
 	 [] -> []
        | (a, d)::p1' -> add (mult_monome (a, d) p2) (mult p1' p2)
      ;;
-     let degre (p:polynome) = List.fold_left (fun d (_, d') -> max d d') 0 p
-     let dominant (p:polynome) = fst (List.hd (List.rev p))
+     let degre (p:polynom) = List.fold_left (fun d (_, d') -> max d d') 0 p
+     let an (p:polynom) = fst (List.hd (List.rev p))
+     let a0 (p:polynom) = fst (List.hd p)
      let rec div_euclide p q = 
        if q = zero then failwith "q = 0"
        else if p = zero then (zero, zero)
@@ -100,7 +121,7 @@ module Poly =
 	   let a, b = degre p, degre q in
 	   if a < b then ([(C.zero, 0)], p)
 	   else 
-	     let pn, qn = dominant p, dominant q in
+	     let pn, qn = an p, an q in
 	     let m = (C.mult pn (C.inv qn), a-b) in
 	     let (q', r') = div_euclide (add p (minus (mult_monome m q))) q in
 	     (add [m] q', r')
@@ -110,9 +131,18 @@ module Poly =
        let _, r = div_euclide a b in
        if r = zero then b else gcd b r
      ;;
+     (* Evalue un polynome en un point précis, à utilisé avec un polynome normalisé ! *)
+     let eval (p:polynom) (x:C.elem) =  
+       let rec horner r d = function
+	 | [] when d <= 0 -> r
+	 | (e,d') :: l  when d = d' -> horner (C.add (C.mult x r) e) (d-1) l
+	 | l -> horner (C.mult x r) (d-1) l
+       in
+      
+       let (a,d)::p' = List.rev p in
+       horner a (d-1) p'
 
  end 
-
 
 module Frac = functor (C : DRing) ->
   struct
@@ -121,12 +151,12 @@ module Frac = functor (C : DRing) ->
        -Le dénominateur est unitaire
        -Le numérateur et le dénominateur sont premiers entre eux
     *)
-    type frac = P.polynome * P.polynome
+    type frac = P.polynom * P.polynom
     let normalise ((p,q):frac) = 
       let a = P.gcd p q in
       let p', _ = P.div_euclide p a in
       let q', _ = P.div_euclide q a in
-      let e = P.dominant q' in
+      let e = P.an q' in
       let q'' = List.map (fun (x, d) -> (C.mult (C.inv e) x, d)) q' in
       let p'' = List.map (fun (x, d) -> (C.mult (C.inv e) x, d)) p' in
       ((p'', q''):frac)
@@ -162,7 +192,7 @@ module Frac = functor (C : DRing) ->
     end
 
   end
-;;
+
 module Matrix = functor (C : DRing) ->
   struct
     type matrix = C.elem array array
@@ -228,7 +258,7 @@ module M = functor (C : DRing) ->
     module M1 = Matrix(F)  
     module M0 = Matrix(C)
     type matrix = M0.matrix
-    type polynom = F0.P.polynome
+    type polynom = F0.P.polynom
 
     let e (x:C.elem) = (([(x,0)], [C.one, 0]) : F.elem )
 
@@ -249,7 +279,37 @@ module M = functor (C : DRing) ->
   end
 
 
-    
+  
+module P = Poly (DRing_Rat);;  
+
+let rat_zeros (p:P.polynom) = 
+  let rec couples l1 l2 = match l1 with
+    | [] -> []
+    | x::xs -> 
+      let rec add = function
+	| [] -> []
+	| y::r when y > 0  && ((abs x <= 1) || Integers.gcd x y = 1) -> (x,y)::add r
+	| _::r -> add r
+      in
+      add l2 @ couples xs l2
+  in
+  
+  let g = Integers.ppcm_list (List.map (fun ((p,q),_) -> q) p) in
+  let f x = fst (DRing_Rat.mult x (g,1)) in
+  let a0, an = f (P.a0 p), f (P.an p) in
+  let zeros_possibles = couples (Integers.div a0) (Integers.div an) in
+  List.filter (fun z -> P.eval p z = DRing_Rat.zero) zeros_possibles
+
+;;
+
+
+(* Exemples *)
+(* Calcul des zéros d'un polynome rationnel *)
+let p = P.normalise [((5,1),6); ((11,12),5); ((-229,4),4); ((257,4),3); ((-137,4),2); ((190,3),1); ((28,1),0)];;
+rat_zeros p
+
+
+(* Calcul du polynome caractéristique d'un endomorphisme *)
 module M = M(DRing_Rat);;
 let m = [|[|(0,1); (4,1)|];
 	  [|(4,3); (3,1)|];
@@ -257,11 +317,10 @@ let m = [|[|(0,1); (4,1)|];
 M.F0.P.print (M.pc m);;
 
 
-module F = Frac(DRing_Rat);;
-module F' = F.DRing_F(
-module M' = Matrix(F);;
 
-Array.make_matrix 2 3 1;;
+(* Calcul du determinant d'une matrice 3*3 de rationnels *)
+
+module M = Matrix(DRing_Rat);;
 
 let m = [|[|(0,1); (4,1); (-7,2)|];
 	  [|(4,3); (3,1); (1,1)|];
@@ -270,45 +329,13 @@ let m = [|[|(0,1); (4,1); (-7,2)|];
 M.det m;; 
 M.print m;;
 
-module F = Frac(DRing_Rat);;
 
 
+(* Exemple d'un polynome à deux indeterminées *)
+module Q = Frac(DRing_Rat);;
 module Qx = Q.DRing_F;;
-module Qxy = Frac(R);;
+module Qxy = Frac(Qx);;
 
 let y =  ([((1, 1), 1)], [((1, 1), 0)]);;
+(* YX / (1+X^2) *)
 print_string (Qxy.print (Qxy.normalise ([(y, 1)], [(Qx.one, 0); (Qx.one,2)])));;
-
-let f = Q.normalise ([((1,1), 1); ((1,1), 2)], [((-3,1), 1); ((4,2), 3)]);;
-let g = Q.normalise ([((1,1), 1); ((1,1), 8)], [((-3,1), 1)]);;
-
-Q.print g;;
-print_string (Q.print (Q.add f g));;
-
-module P = Poly (DRing_Rat);;
-
-P.print (P.gcd [((1,1), 0); ((1,1), 1)] [((1,1), 0); ((2,1), 1); ((1,1), 2)]);;
-
-
-
-
-
-
-
-
-P.normalise [];;
-P.degre (P.normalise [((0,1), 3)]);;
-let p1 = P.normalise [((1,1), 0); ((2,1), 1); ((2,1), 3)];;
-let p2 = P.normalise [((1,1), 0); ((1,1), 1)];;
-
-P.print (P.gcd p1 p2);;
-
-P.print p1;;
-P.print p2;;
-
-P.degre p1 ;;
-
-let q, r = P.div_euclide p1 p2;;
-P.print r;;
-P.print (P.prod_p p1 p2);;
-
