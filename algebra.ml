@@ -40,7 +40,7 @@ module Rationnal =
 	  let x' = abs x in let y' = abs y in
 	  let d = Integers.gcd x' y' in 
 	  ( (s * (x'/d), y'/d) : rat)
-      ;;
+     
       let mult ((x,y):rat) ((x',y'):rat) = normalise (x*x', y*y');;
       let add ((x,y):rat) ((x',y'):rat) = normalise (y'*x+y*x', y*y');;
       let minus ((x,y):rat) = normalise (-x, y);;
@@ -59,6 +59,71 @@ module DRing_Rat:DRing with type elem= Rationnal.rat =
     let inv = Rationnal.inv;;
     let print = Rationnal.print
   end
+
+
+
+module Matrix = functor (C : DRing) ->
+  struct
+    type matrix = C.elem array array
+    (* M € M_n,p p = rows, m = colums *)
+    (* size M = (p,n) *)
+    let size (m:matrix) = Array.length m, Array.length m.(0)
+    (* i € [|1,p|] & j € [|1,n|] *)
+    let get (m:matrix) (i,j) = (m.(i-1)).(j-1)
+    let print (m:matrix) = 
+      let p,n = size m in
+      for i = 1 to p do
+	for j = 1 to n do
+	 print_string ((C.print (get m (i,j))) ^ " | ")
+	done;
+	print_newline();
+      done
+    let swap (m:matrix) (i,i') =
+      let tmp = m.(i-1) in
+      m.(i-1) <- m.(i'-1);
+      m.(i'-1) <- tmp
+    let copy (m:matrix) = Array.map Array.copy m
+    let map f (m:matrix)  = Array.map (fun l -> Array.map f l) m
+    let det (m:matrix) = 
+      let rec det' (m:matrix) k n = 
+        (* Si on est sur un bloc 1*1 c'est terminé *)
+	if k = n then get m (n,n)
+	else 
+          begin
+	  (* on trouve le pivot *)
+	    let t = ref false in
+	    let k' = ref k in
+	    while not (!t) && !k' <= n do
+	      if (get m (!k',k)) <> C.zero then t:=true
+	      else incr k';
+	    done;
+	  (*si tous les éléments de la colone sont nuls, le determinant est nul *)
+	    if not (!t) then C.zero 
+	    else 
+              begin
+	        let k' = !k' in
+	        let p = get m (k',k) in
+	        swap m (k,k');
+	        for i = k+1 to n do
+	        (* Li <- Li - alpha Lk, alpha = M_i,k/p *)
+	          let alpha = C.mult (get m (i,k)) (C.inv p) in
+	          for j = k to n do
+		    m.(i-1).(j-1) <- C.add (get m (i,j)) (C.minus (C.mult alpha (get m (k,j))));
+	          done;
+	        done;
+	        C.mult (if k' - k mod 2 = 0 then p else C.minus p) (det' m (k+1) n)
+              end
+          end
+            
+      in
+      let p,n = size m in
+      if p <> n then failwith "echec : matrice non carree"
+      else 
+	let nm = copy m in
+	det' nm 1 n
+          
+  end
+
 
 	
 
@@ -142,7 +207,30 @@ module Poly =
        let (a,d)::p' = List.rev p in
        horner a (d-1) p'
 
+         (* Résultant de deux polynome normalisé *)
+     module M = Matrix(C)
+     let resultant p1 p2 = 
+       let d1 = degre p1 in
+       let d2 = degre p2 in
+       let s = d1 +d2 in
+       let m = Array.make_matrix s s C.zero in
+       let rec copy_ligne l i0 i = function
+         | [] -> []
+         | (e,d)::r when i = d -> 
+           m.(l-1).(i0+i-1) <- e;
+           copy_ligne l i0 (i+1) r
+         | p -> copy_ligne l i0 (i+1) p
+       in
+       for l = 1 to d2 do
+         copy_ligne l l 0 p1;
+       done;
+       for l = d2+1 to s do
+         copy_ligne l (l-d2) 0 p2
+       done;
+       M.det m
+
  end 
+
 
 module Frac = functor (C : DRing) ->
   struct
@@ -190,62 +278,6 @@ module Frac = functor (C : DRing) ->
       let inv = inv;;
       let print = print
     end
-
-  end
-
-module Matrix = functor (C : DRing) ->
-  struct
-    type matrix = C.elem array array
-    (* M € M_n,p p = rows, m = colums *)
-    (* size M = (p,n) *)
-    let size (m:matrix) = Array.length m, Array.length m.(0)
-    (* i € [|1,p|] & j € [|1,n|] *)
-    let get (m:matrix) (i,j) = (m.(i-1)).(j-1)
-    let print (m:matrix) = 
-      let p,n = size m in
-      for i = 1 to p do
-	for j = 1 to n do
-	 print_string ((C.print (get m (i,j))) ^ " | ")
-	done;
-	print_newline();
-      done
-    let swap (m:matrix) (i,i') =
-      let tmp = m.(i-1) in
-      m.(i-1) <- m.(i'-1);
-      m.(i'-1) <- tmp
-    let copy (m:matrix) = Array.map Array.copy m
-    let map f (m:matrix)  = Array.map (fun l -> Array.map f l) m
-    let det (m:matrix) = 
-      let rec det' (m:matrix) k n = 
-	if k = n then get m (n,n)
-	else 
-	(* on trouve le pivot *)
-	  let t = ref false in
-	  let k' = ref k in
-	  while not (!t) && !k' <= n do
-	    if get m (!k',k) <> C.zero then t:=true;
-	    incr k';
-	  done;
-	(*si tous les éléments de la colone sont nuls, le determinant est nul *)
-	  if not (!t) then C.zero 
-	  else 
-	    let k' = !k' in
-	    let p = get m (k',k) in
-	    swap m (k,k');
-	    for i = k+1 to n do
-	    (* Li <- Li - alpha Lk, alpha = M_i,k/p *)
-	      let alpha = C.mult (get m (i,k)) (C.inv p) in
-	      for j = k to n do
-		m.(i-1).(j-1) <- C.add (get m (i,j)) (C.minus (C.mult alpha (get m (k,j))));
-	      done;
-	    done;
-	    C.mult (if k' - k mod 2 = 0 then p else C.minus p) (det' m (k+1) n)
-      in
-      let p,n = size m in
-      if p <> n then failwith "echec : matrice non carree"
-      else 
-	let nm = copy m in
-	det' nm 1 n
 
   end
 
@@ -307,6 +339,12 @@ let rat_zeros (p:P.polynom) =
 (* Calcul des zéros d'un polynome rationnel *)
 let p = P.normalise [((5,1),6); ((11,12),5); ((-229,4),4); ((257,4),3); ((-137,4),2); ((190,3),1); ((28,1),0)];;
 rat_zeros p
+
+(* Calcul du résultant de deux polynomes : *)
+let p = [((1,1), 0); ((1, 1), 2)];;
+let q = [((3,1), 0);((2,1), 1); ((1,1), 4)];;
+ P.resultant p  q;; (* Renvoit 20 (mathematica confirme) *)
+ P.resultant [((1, 1), 1)] [((1, 1), 2)];; (* Renvoit 0 car les deux polynomes ne sont pas premiers entres eux *)
 
 
 (* Calcul du polynome caractéristique d'un endomorphisme *)
