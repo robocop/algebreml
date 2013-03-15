@@ -175,6 +175,23 @@ module Poly =
 	 [] -> []
        | (a, d)::p1' -> add (mult_monome (a, d) p2) (mult p1' p2)
      ;;
+     let rec pow p k = 
+       if k = 0 then one
+       else 
+         if k mod 2 = 0 then 
+           let r = pow p (k/2) in
+           mult r r
+         else 
+           mult p (pow p (k-1))
+     
+     (* Evalue le polynome en k : eval_k P k = P(X+k) *)
+     let rec eval_k (p:polynom) k = match p with
+       | [] -> []
+       | (e, d)::l ->
+         let p = mult_monome (e, 0) (pow [(k, 0); (C.one, 1)] d) in
+         add p (eval_k l k)
+     
+
      let degre (p:polynom) = List.fold_left (fun d (_, d') -> max d d') 0 p
      let an (p:polynom) = fst (List.hd (List.rev p))
      let a0 (p:polynom) = fst (List.hd p)
@@ -207,7 +224,7 @@ module Poly =
        let (a,d)::p' = List.rev p in
        horner a (d-1) p'
 
-         (* Résultant de deux polynome normalisé *)
+         (* Résultant de deux polynome normalisé non constants *)
      module M = Matrix(C)
      let resultant p1 p2 = 
        let d1 = degre p1 in
@@ -232,6 +249,7 @@ module Poly =
  end 
 
 
+
 module Frac = functor (C : DRing) ->
   struct
     module P = Poly (C);;
@@ -254,9 +272,12 @@ module Frac = functor (C : DRing) ->
 
     let print ((p,q):frac) = 
       let a, b = P.print p, P.print q in
+      (* 
       let n = max (String.length a) (String.length b) in
       let f = String.make n '-' in
       a ^ "\n" ^ f ^ "\n" ^ b 
+      *)
+     "[" ^  a ^ "]/[" ^ b ^ "]"
     
     let add ((p,q):frac) ((p',q'):frac) = 
       normalise (P.add (P.mult q' p) (P.mult q p'), P.mult q q')
@@ -314,6 +335,7 @@ module M = functor (C : DRing) ->
   
 module P = Poly (DRing_Rat);;  
 
+
 let rat_zeros (p:P.polynom) = 
   let rec couples l1 l2 = match l1 with
     | [] -> []
@@ -325,19 +347,20 @@ let rat_zeros (p:P.polynom) =
       in
       add l2 @ couples xs l2
   in
-  
+  let q, r = P.div_euclide p P.x in
+  let p = if r = P.zero then q else p in
   let g = Integers.ppcm_list (List.map (fun ((p,q),_) -> q) p) in
   let f x = fst (DRing_Rat.mult x (g,1)) in
   let a0, an = f (P.a0 p), f (P.an p) in
   let zeros_possibles = couples (Integers.div a0) (Integers.div an) in
-  List.filter (fun z -> P.eval p z = DRing_Rat.zero) zeros_possibles
+  let l = List.filter (fun z -> P.eval p z = DRing_Rat.zero) zeros_possibles in
+  if r = P.zero then DRing_Rat.zero::l else l
 
 ;;
 
-
 (* Exemples *)
 (* Calcul des zéros d'un polynome rationnel *)
-let p = P.normalise [((5,1),6); ((11,12),5); ((-229,4),4); ((257,4),3); ((-137,4),2); ((190,3),1); ((28,1),0)];;
+let p = P.normalise [((5,1),7); ((11,12),6); ((-229,4),5); ((257,4),4); ((-137,4),3); ((190,3),2); ((28,1),1)];;
 rat_zeros p
 
 (* Calcul du résultant de deux polynomes : *)
