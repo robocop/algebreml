@@ -98,7 +98,7 @@ module Matrix = functor (C : DRing) ->
 	      if (get m (!k',k)) <> C.zero then t:=true
 	      else incr k';
 	    done;
-	  (*si tous les éléments de la colone sont nuls, le determinant est nul *)
+	  (*si tous les éléments de la colonne sont nuls, le determinant est nul *)
 	    if not (!t) then C.zero 
 	    else 
               begin
@@ -140,7 +140,7 @@ module Matrix = functor (C : DRing) ->
 		if (get m (!k',k)) <> C.zero then t:=true
 		else incr k';
 	      done;
-	    (*si tous les éléments de la colone sont nuls, on passe directement au sous bloc *)
+	    (*si tous les éléments de la colonne sont nuls, on passe directement au sous bloc *)
 	      if not (!t) then calc m v (k+1) n
 	      else 
 		begin
@@ -175,24 +175,49 @@ module Matrix = functor (C : DRing) ->
       let n, _ = size m' in
       let rec find (x:matrix) k = 
 	if k = 0 then Some x
-	else 
-	  if get m' (k,k) = C.zero then 
-	    if get v' (k, 1) = C.zero then (x.(k-1).(0) <- C.zero; find x (k-1))
+	else
+	  (* On trouve si elle existe la première composante non nulle de la ligne k *)
+	  let r = ref (-1) in
+	  for i = n downto k do
+	    if get m' (k, i) <> C.zero then r := i;
+	  done;
+	  if !r = -1 then (* si la ligne k est nulle *)
+	    if get v' (k, 1) =  C.zero then (x.(k-1).(0) <- C.zero; find x (k-1))
 	    else None
 	  else 
-	    (* x_i = (v_i - sum_{i = k+1}^n_{M_k,i * x_i})/a_k *)
-	    let r = ref C.zero in
-	    for i = k+1 to n do
-	      r := C.add (!r) (C.mult (get m' (k, i)) (get x (i, 1)));
+	   ( 
+	     print_endline (C.print (get m' (k, !r)));
+	    (* x_r = (v_r - sum_{i = r+1}^n_{M_k,i * x_i})/M_k,r *)
+	    let s = ref C.zero in
+	    for i = !r+1 to n do
+	      s := C.add (!s) (C.mult (get m' (k, i)) (get x (i, 1)));
 	    done;
-	    x.(k-1).(0) <- C.mult (C.add (get v' (k, 1)) (C.minus !r)) (C.inv (get m' (k,k)));
+	    x.(!r-1).(0) <- C.mult (C.add (get v' (!r, 1)) (C.minus !s)) (C.inv (get m' (k,!r)));
 	    find x (k-1)
+	   )
       in
       let x = copy v in
       find x n
           
   end
 
+module M = Matrix(DRing_Rat);;
+
+let m = [|[|(0,1); (4,1); (-7,2)|];
+	  [|(4,3); (3,1); (1,1)|];
+	  [|(2,1); (0,1); (4,3)|]
+	|];;
+M.det m;; 
+M.print m;;
+
+(* Résolution d'un système linéaire, explicitation d'une solution *)
+let m = [|[|(0,1); (1,1); (-1,1); (1,1)|];
+	  [|(0,1); (0,1); (2,1); (-3,1)|];
+	  [|(0,1); (0,1); (0,1); (3,1)|];
+	   [|(0,1); (0,1); (0,1); (0,1)|];
+	|];;
+let v = [|[|(0,1)|]; [|(0,1)|]; [|(1,1)|]; [|(0,1)|]|];;
+M.find_a_solution m v;;
 module Poly = 
   functor ( C : DRing) -> 
    struct 
@@ -462,11 +487,20 @@ M.det m;;
 M.print m;;
 
 (* Résolution d'un système linéaire, explicitation d'une solution *)
+let m = [|[|(0,1); (1,1); (-1,1); (1,1)|];
+	  [|(0,1); (0,1); (2,1); (-3,1)|];
+	  [|(0,1); (0,1); (0,1); (3,1)|];
+	   [|(0,1); (0,1); (0,1); (0,1)|];
+	|];;
+let v = [|[|(0,1)|]; [|(0,1)|]; [|(1,1)|]; [|(0,1)|]|];;
+(*
 let m = [|[|(1,1); (-1,1); (2,1)|];
 	  [|(3,1); (2,1); (1,1)|];
 	  [|(6,1); (4,1); (2,1)|]
 	|];;
 let v = [|[|(5,1)|]; [|(10,1)|]; [|(20,1)|]|];;
+*)
+
 let m', v' = M.forme_echelonnee m v;; 
 M.find_a_solution m v;;
 M.print m';;
