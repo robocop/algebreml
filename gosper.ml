@@ -15,6 +15,8 @@ module C = DRing_Rat;;
 module P = Poly(DRing_Rat);;
 module Q = Frac(DRing_Rat);;
 module Py = Poly(Q.DRing_F);;
+let natural (p,q) = q = 1 && p >= 0;;
+
 P.one;;
 
 let gR = Q.normalise ([((1, 1), 2)], [((1, 1), 0); ((-2, 1), 1); ((1, 1), 2)]);;
@@ -46,7 +48,7 @@ let rec calcul (p,q,r) gR =
   let rat_roots = rat_zeros (fst (Py.resultant q' r')) in
  
 
-  let natural (p,q) = q = 1 && p >= 0 in 
+  
   match List.filter natural rat_roots with
   | [] -> (p,q,r)
   | (k, _)::_ -> (* q(X) et r(X+k) ne sont pas premiers entres eux *)
@@ -60,17 +62,87 @@ let rec calcul (p,q,r) gR =
       else 
         P.mult (P.eval_k g (-i, 1)) (prod (i+1))
     in
-    calcul (P.mult p (prod 0),q2,r2)
+    calcul (P.mult p (prod 0),q2,r2) gR
     
 ;;
 
-calcul ([((1, 1), 2)], [((1, 1), 0)], [((1, 1), 0)]) gR;;
+let calcul_pqr gR = calcul (P.one, fst gR, snd gR) gR;;
   
-let p = calcul (P.one, fst gR, snd gR) gR;;
+let p, q, r = calcul_pqr gR;;
 
-P.print (fst p);;
-print_string (Py.print a);;
+(* 2ième étape : majoration du degre de f(X) *)
+(* f(X) polynome vérifiant : p(X) = q(X+1)f(X) - f(X-1)r(X) *)
+(* On a alors alpha(X) = q(X+1)/ p(X) * f(X) *)
 
-Q.one;;
+(* Majoration du degré de f *)
+(* On pose s+(X) = q(X+1) + r(X) et s-(X) = q(X+1) - r(X) *)
 
-Py.print (Py.eval_k b (P.x, P.one));;
+(* 1ier cas : deg s-(X) != deg s+(X) - 1 alors deg f(X) = deg P(X) - max (deg s-(X), deg s+(X)-1) *)
+(* 2ieme cas : l = deg s-(X) = deg s+(X) - 1 
+   s-(X) = u_l X^l + ...
+   s+(X) = v_{l+1} X^(l+1) + ...
+
+   On pose n_0 = - 2 * u_l / v_{l+1}
+   Alors si n_0 !€ N  :  deg f <= deg p - l
+         si n_0 € N :  def f <= max(deg p -l, n0)
+*)
+
+let majoration_degre_f (p, q, r) = 
+  let s_plus = P.add (P.eval_k q C.one) r in
+  let s_moins =  P.add (P.eval_k q C.one) (P.minus r) in
+  if s_moins <> P.zero then 
+    let d_s_moins = P.degre s_moins in
+    let d_s_plus = P.degre s_plus in
+    if d_s_moins <> (d_s_plus-1) then P.degre p - max d_s_moins (d_s_plus -1)
+    else 
+      let u = P.an s_moins in
+      let v = P.an s_plus in
+      let n0 = C.mult (-2,1) (C.mult u (C.inv v)) in
+      if natural n0 then max (P.degre p - d_s_moins) (fst n0)
+      else P.degre p - d_s_moins
+  else (* si s- = 0 alors s+ <> 0 (sinon r = q = 0) *)
+    (* donc deg s-(X) != deg s+(X) - 1 et deg f(X) = 1+deg P(X) - deg s+(X) *)
+    1 + P.degre p - P.degre s_plus 
+;;
+
+let d = majoration_degre_f (p, q, r);;
+
+
+(* 3ième étape calcul explicite de f(X) *)
+(* Soit d la mojoration du degre de f obtenue *)
+(* f(X) = w0 + w1X + ... + wd X^d *)
+(* On résoud : p(X) = q(X+1)f(X) - f(X-1)r(X) *)
+
+(* qui s'écrit : sum_{p = 0}^d_{w_p * Pp(X)} = p(X) *)
+(* avec Pp(X) = X^p*Q(X+1) -r(X)*(X-1)^k *)
+
+let calcul_Pk k (p,q,r) = 
+  let x_p = [(1,1), k] in
+  P.add (P.mult x_p (P.eval_k q C.one))
+    (P.minus (P.mult r (P.eval_k x_p (-1,1))))
+;;
+module M = Matrix(DRing_Rat);;
+let make_matrix d (p,q,r) () = 
+  let m = Array.make_matrix (d+1) (d+1) (0,1) in
+  for k = 0 to d do
+    let pk = calcul_Pk k (p,q,r) in
+    List.iter (fun (e, q) -> m.(q).(k) <- e) pk;
+  done;
+  (m:M.matrix)
+;;
+
+
+let make_vector d p () = 
+  let b = Array.make (d+1) [|(0,1)|] in
+  List.iter (fun (e, q) -> b.(q) <- [|e|]) p;
+  b
+;;
+let m = make_matrix d (p,q,r) ();;
+let b = make_vector d p ();;
+M.print m;;
+
+(* W = [w0; w1;... wd] alors p(X) = q(X+1)f(X) - f(X-1)r(X) s'écrit : *)
+(* M W = B avec M = make_matrix () et B = make_vector () *)
+
+
+M.find_a_solution m b;;

@@ -298,7 +298,7 @@ module Poly =
        let s = d1 +d2 in
        let m = Array.make_matrix s s C.zero in
        let rec copy_ligne l i0 i = function
-         | [] -> []
+         | [] -> ()
          | (e,d)::r when i = d -> 
            m.(l-1).(i0+i-1) <- e;
            copy_ligne l i0 (i+1) r
@@ -308,7 +308,7 @@ module Poly =
          copy_ligne l l 0 p1;
        done;
        for l = d2+1 to s do
-         copy_ligne l (l-d2) 0 p2
+         copy_ligne l (l-d2) 0 p2;
        done;
        M.det m
 
@@ -424,7 +424,12 @@ let rat_zeros (p:P.polynom) =
 
 ;;
 
-(* Exemples *)
+(* 
+   ========
+   Exemples
+   ========
+ 
+*)
 (* Calcul des zéros d'un polynome rationnel *)
 let p = P.normalise [((5,1),7); ((11,12),6); ((-229,4),5); ((257,4),4); ((-137,4),3); ((190,3),2); ((28,1),1)];;
 rat_zeros p
@@ -432,7 +437,7 @@ rat_zeros p
 (* Calcul du résultant de deux polynomes : *)
 let p = [((1,1), 0); ((1, 1), 2)];;
 let q = [((3,1), 0);((2,1), 1); ((1,1), 4)];;
- P.resultant p  q;; (* Renvoit 20 (mathematica confirme) *)
+ P.resultant p  q;; (* Renvoit 20 (Mathematica confirme) *)
  P.resultant [((1, 1), 1)] [((1, 1), 2)];; (* Renvoit 0 car les deux polynomes ne sont pas premiers entres eux *)
 
 
