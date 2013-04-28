@@ -78,6 +78,7 @@ module Matrix = functor (C : DRing) ->
 	done;
 	print_newline();
       done
+    (* Echange les lignes i et i' *)
     let swap (m:matrix) (i,i') =
       let tmp = m.(i-1) in
       m.(i-1) <- m.(i'-1);
@@ -121,11 +122,76 @@ module Matrix = functor (C : DRing) ->
       else 
 	let nm = copy m in
 	det' nm 1 n
+	  (* m matrice n*n, v vecteur (v matrice n*1 ) *)
+    let forme_echelonnee (m:matrix) (v:matrix) = 
+      let n, p = size m in
+      let n', p' = size v in
+      if not (n = p && p' = 1) then failwith "matrice non carrée ou vecteur de la mauvaise taille"
+      else
+	let rec calc (m:matrix) (v:matrix) k n = 
+          (* Si on est sur un bloc 1*1 c'est terminé *)
+	  if k = n then (m, v)
+	  else 
+            begin
+	      (* on trouve le pivot *)
+	      let t = ref false in
+	      let k' = ref k in
+	      while not (!t) && !k' <= n do
+		if (get m (!k',k)) <> C.zero then t:=true
+		else incr k';
+	      done;
+	    (*si tous les éléments de la colone sont nuls, on passe directement au sous bloc *)
+	      if not (!t) then calc m v (k+1) n
+	      else 
+		begin
+	          let k' = !k' in
+	          let p = get m (k',k) in
+	          swap m (k,k'); swap v (k, k');
+	          for i = k+1 to n do
+	          (* Li <- Li - alpha Lk, alpha = M_i,k/p dans M et V *)
+	            let alpha = C.mult (get m (i,k)) (C.inv p) in
+		    (* On modifie M *)
+	            for j = k to n do
+		      m.(i-1).(j-1) <- C.add (get m (i,j)) (C.minus (C.mult alpha (get m (k,j))));
+	            done;
+		    (* On modifie V *)
+		    v.(i-1).(0) <- C.add (get v (i,1)) (C.minus (C.mult alpha (get v (k,1))));
+	          done;
+	          calc m v (k+1) n
+		end
+            end      
+	in
+	let m', v' = copy m, copy v in 
+	calc m' v' 1 n 
+
+    (* Calcul une solution d'un système linéaire de la forme M X = V, 
+       M une matrice n*n et V un vecteur n*1 donné *)
+    (* L'ensemble des solutions est soit l'ensemble vide, 
+       soit un sous espace affine de codimension r, r rang de M *)
+    (* Renvoit donc soit None (cas de l'ensemble vide), 
+       soit Some X, X vecteur n*1 appartenant à l'ensemble des solution *)
+    let find_a_solution (m:matrix) (v:matrix) = 
+      let m', v' = forme_echelonnee m v in
+      let n, _ = size m' in
+      let rec find (x:matrix) k = 
+	if k = 0 then Some x
+	else 
+	  if get m' (k,k) = C.zero then 
+	    if get v' (k, 1) = C.zero then (x.(k-1).(0) <- C.zero; find x (k-1))
+	    else None
+	  else 
+	    (* x_i = (v_i - sum_{i = k+1}^n_{M_k,i * x_i})/a_k *)
+	    let r = ref C.zero in
+	    for i = k+1 to n do
+	      r := C.add (!r) (C.mult (get m' (k, i)) (get x (i, 1)));
+	    done;
+	    x.(k-1).(0) <- C.mult (C.add (get v' (k, 1)) (C.minus !r)) (C.inv (get m' (k,k)));
+	    find x (k-1)
+      in
+      let x = copy v in
+      find x n
           
   end
-
-
-	
 
 module Poly = 
   functor ( C : DRing) -> 
@@ -389,6 +455,19 @@ let m = [|[|(0,1); (4,1); (-7,2)|];
 	|];;
 M.det m;; 
 M.print m;;
+
+(* Résolution d'un système linéaire, explicitation d'une solution *)
+let m = [|[|(1,1); (-1,1); (2,1)|];
+	  [|(3,1); (2,1); (1,1)|];
+	  [|(6,1); (4,1); (2,1)|]
+	|];;
+let v = [|[|(5,1)|]; [|(10,1)|]; [|(20,1)|]|];;
+let m', v' = M.forme_echelonnee m v;; 
+M.find_a_solution m v;;
+M.print m';;
+M.print v';;
+
+
 
 
 
