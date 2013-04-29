@@ -16,12 +16,12 @@ module P = Poly(DRing_Rat);;
 module Q = Frac(DRing_Rat);;
 module Py = Poly(Q.DRing_F);;
 let natural (p,q) = q = 1 && p >= 0;;
-
-P.one;;
+(*
 
 let gR = Q.normalise ([((1, 1), 2)], [((1, 1), 0); ((-2, 1), 1); ((1, 1), 2)]);;
 print_endline (Q.print gR);;
 
+*)
 (* 1iere étape : on écrit R sous la forme : *)
 (* R(X) = p(X)q(X) / p(X-1)r(X) avec pour tout k € N : q(X) ^ r(X+k) = 1 *)
 (* Il faut donc calculer les polynomes p, q, r *)
@@ -67,9 +67,9 @@ let rec calcul (p,q,r) gR =
 ;;
 
 let calcul_pqr gR = calcul (P.one, fst gR, snd gR) gR;;
-  
+(*  
 let p, q, r = calcul_pqr gR;;
-
+*)
 (* 2ième étape : majoration du degre de f(X) *)
 (* f(X) polynome vérifiant : p(X) = q(X+1)f(X) - f(X-1)r(X) *)
 (* On a alors alpha(X) = q(X+1)/ p(X) * f(X) *)
@@ -105,7 +105,6 @@ let majoration_degre_f (p, q, r) =
     1 + P.degre p - P.degre s_plus 
 ;;
 
-let d = majoration_degre_f (p, q, r);;
 
 
 (* 3ième étape calcul explicite de f(X) *)
@@ -122,6 +121,9 @@ let calcul_Pk k (p,q,r) =
     (P.minus (P.mult r (P.eval_k x_p (-1,1))))
 ;;
 module M = Matrix(DRing_Rat);;
+
+(* W = [w0; w1;... wd] alors p(X) = q(X+1)f(X) - f(X-1)r(X) s'écrit : *)
+(* M W = B avec M = make_matrix () et B = make_vector () *)
 let make_matrix d (p,q,r) () = 
   let m = Array.make_matrix (d+1) (d+1) (0,1) in
   for k = 0 to d do
@@ -137,12 +139,54 @@ let make_vector d p () =
   List.iter (fun (e, q) -> b.(q) <- [|e|]) p;
   b
 ;;
-let m = make_matrix d (p,q,r) ();;
-let b = make_vector d p ();;
-M.print m;;
+let solve gR =
+  let p, q, r = calcul_pqr gR in
+  let d = majoration_degre_f (p, q, r) in
+  if d < 0 then None
+  else
+    let m = make_matrix d (p,q,r) () in 
+    let b = make_vector d p () in
+    match M.find_a_solution m b with
+    | None -> None
+    | Some w ->
+      let f = ref [] in
+      for i = 0 to d do
+        if w.(i).(0) <> C.zero then f:= (w.(i).(0), i)::!f;
+      done;
+      (* alpha(X) = q(X+1)/ p(X) * f(X) *)
+      let f = P.normalise (!f) in
+      Some (Q.normalise (P.mult (P.eval_k q C.one) f, p))
+   
+;;
 
-(* W = [w0; w1;... wd] alors p(X) = q(X+1)f(X) - f(X-1)r(X) s'écrit : *)
-(* M W = B avec M = make_matrix () et B = make_vector () *)
+let ($) f x = f x;;
+let print = function
+  | None -> print_endline "pas de solution."
+  | Some alpha -> print_endline $ Q.print alpha
+;;
+(* Exemple : a_n = n^2 *)
+(* a_n/a_(n-1) = n^2 / (n-1)^2 = R(n) avec R = X^2 / (X-1)^ 2*)
+print $ solve (Q.normalise ([((1, 1), 2)], [((1, 1), 0); ((-2, 1), 1); ((1, 1), 2)]));;
+
+(* Exemple : a_n = n *)
+(* a_n/a_(n-1) = n/(n-1) = R(n) avec R = X/(X-1)*)
+print $ solve (Q.normalise ([((1, 1), 1)], [((-1, 1), 0); ((1, 1), 1)]));;
+
+(* Exemple : a_n = 1/n! *)
+(* a_n/a_(n-1) = 1/n = R(n) avec R = 1/X*)
+print $ solve (Q.normalise ([((1, 1), 0)], [((1, 1), 1)]));;
+
+(* Exemple : a_n = 2^n *)
+(* a_n/a_(n-1) = 2 = R(n) avec R = 2 *)
+print $ solve (Q.normalise ([((2, 1), 0)], [((1, 1), 0)]));;
 
 
-M.find_a_solution m b;;
+(* Exemple : a_n = n*2^n *)
+(* a_n/a_(n-1) = 2*n/(n-1) = R(n) avec R = 2X/(X-1) *)
+print $ solve (Q.normalise ([((2, 1), 1)], [((-1, 1), 0); ((1, 1), 1)]));;
+(* Sn = 2^n * (2n-2) + C*)
+
+(* Exemple : a_n = 1/n(n-1) *)
+(* a_n / a_(n-1) = (n-1)(n-2) / n(n-1) = (n^2 - 3n + 2) / (n^2 - n) *)
+print $ solve (Q.normalise ([((2, 1), 0); ((-3, 1), 1); ((1, 1), 2)], [((-1, 1), 1); ((1, 1), 2)]));;
+(* S_n = (1-n)/n*(n-1) = -1/n + C*)
