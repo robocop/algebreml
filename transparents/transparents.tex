@@ -1,0 +1,172 @@
+\documentclass[17 pt]{scrartcl}
+
+\usepackage[utf8x]{inputenc} % un package
+\usepackage[T1]{fontenc}      % un second package
+\usepackage[francais]{babel}  % un troisième package
+\usepackage{amsfonts}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{lmodern}
+\usepackage[top=1cm, bottom=1cm, left=1cm, right=1cm]{geometry} 
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{fancyvrb}
+\usepackage{tikz}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage{amsthm}
+\usetikzlibrary{arrows,decorations.pathmorphing,backgrounds,fit,positioning,shapes.symbols,chains}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+\DefineShortVerb{\|}
+
+\lstset{language=Caml, 
+		basicstyle=\fontsize{14}{15},
+ 		numbersep=5pt,             
+ 		backgroundcolor=\color{white}, 
+ 	    showspaces=false,               % show spaces adding particular underscores
+ 	    showstringspaces=false,         % underline spaces within strings
+ 	    showtabs=false,         
+ 	 	frame=single,                   % adds a frame around the code
+ 		tabsize=2,                      % sets default tabsize to 2 spaces
+ 		captionpos=b,                   % sets the caption-position to bottom
+ 		breaklines=true,                % sets automatic line breaking
+ 	 	breakatwhitespace=false,        
+  		keywordstyle=\color{blue},        
+ 		commentstyle=\color{dkgreen},      
+        stringstyle=\color{mauve},
+        escapechar=!,
+		}
+
+\newtheorem{prop}{Proposition}
+
+\begin{document}
+	\section*{Sommation formelle}
+	
+	On se donne une somme $S_n = \sum_{k=n_0}^n {a_k} $, existe-t-il une expression "fermée" de $S_n$, en fonction de n ?
+	
+    \subsection*{Exemples}
+    	\begin{itemize}
+    		\item $\sum_{k=0}^n k^2 = \frac{n(n+1)(2n+1)}{6}$\\
+    		
+		\item $\sum_{k=1}^n \frac{1}{k(k+1)} = \frac{n}{n+1}$\\
+			
+		\item $ \sum_{k=1}^n {\frac{n^3-2n^2-1}{n^4+n^2+1}(n-1)!} = \frac{n!}{n^2+n+1}$\\
+		
+		\item $ \sum_{k=1}^n {\frac{1}{n!}} = $ ? \\
+		\item $ \sum_{k=1}^n {\frac{2n+3}{n(n+1)}} = $ ? \\
+	\end{itemize}
+	
+	\subsection*{Formes fermées}
+	On s'interesse aux sommes  $S_n = \sum_{k=n_0}^n {a_k} $ telles que : $\frac{S_n}{S_{n-1}}$ soit une fraction rationnelle en n.
+	
+	\begin{prop}
+	 $\frac{S_n}{S_{n-1}}$ est une fraction rationelle en n ssi il existe deux fractions rationelles $R(X)$ et $\alpha(X)$ telles que : 
+	 \begin{itemize}
+	 \item $\forall n \in \mathbb{N}$, $\frac{a_n}{a_{n-1}} = R(n)$
+	 \item $\forall n \in \mathbb{N}$, $S_n = \alpha(n)a_n$
+	 \end{itemize}
+	\end{prop}
+
+	Si c'est le cas on dit que $S_n$ admet une forme fermée.\\ \\
+	\textbf{Algorithme de Gosper} :
+		Etant donné la fraction rationelle R(X) (determinée à l'aide de l'expression de $a_n$), l'algorithme doit determiner si la fraction rationelle $\alpha(X)$ existe et dans ce cas doit la calculer.
+		\newpage
+	\subsection*{Principe de l'algorithme}
+	\begin{prop}
+		Il existe 3 polynômes p(X), q(X), et r(X) tels que : 
+		\begin{itemize}
+		 \item $R(X) = \frac{p(X)q(X)}{p(X-1)r(X)}$
+	 	 \item $\forall k \in \mathbb{N}$, $q(X) \wedge r(X+k) = 1 $
+	 \end{itemize}
+	\end{prop}
+	\textbf{Preuve algorithmique} : \\
+	On définit séquentiellement des polynomes $p_j(X)$, $q_j(X)$ et $r_j(X)$ tels que : $R(X) = \frac{p_j(X)q_j(X)}{p_j(X-1)r_j(X)}$ : 
+		\begin{itemize}
+		\item On définit : $p_0(X) = 1$ et $R(X) = \frac{q_0(X)}{r_0(X)} $ avec $q_0(X) \wedge r_0(X) = 1$ 
+		\item Si $\forall k \in \mathbb{N}$, $q_j(X) \wedge r_j(X+k) = 1 $ on s'arrête
+		\item Si $\exists k \in \mathbb{N}$, $q_j(X) \wedge r_j(X+k) \neq 1 $ : \\
+		On pose $g(X)$ le pgcd de $q_j(X)$ et de $r_j(X+k)$ et : \\
+		$q_{j+1}(X) = \frac{q_j(X)}{g(X)}$, $r_{j+1}(X) = \frac{r_j(X)}{g(X-k)}$ et \\$p_{j+1}(X) = p_j(X)g(X)g(X-1)...g(X-k+1)$
+		
+		On a $R(X) = \frac{p_{j+1}(X)q_{j+1}(X)}{p_{j+1}(X-1)r_{j+1}(X)}$ et deg $q_{j+1}(X) < $ deg $q_{j}(X)$
+		\end{itemize}
+		
+		
+\textbf{Problème} : \\
+Comment tester algorithmiquement si :  $\forall k \in \mathbb{N}$, $q(X) \wedge r(X+k) = 1 $ ?
+	
+On introduit le \textbf{résultant} par rapport à la variable $X$ des polynômes $q(X)$ et $r(X+Y)$ : \\$G(Y) = Res(q(X), r(X+Y))$ 
+
+On teste ensuite si ce polynôme G admet des racines entières.
+
+	\begin{prop}
+		Si la fraction rationelle $\alpha(X)$ existe, alors elle est de la forme 
+			$$\alpha(X) = \frac{q(X+1)}{p(X)}f(X)$$
+	    avec f(X) polynôme vérifiant l'équation fonctionelle : 
+	        $$p(X) = q(X+1)f(X)-f(X-1)r(X)$$
+	\end{prop}
+	
+	\newpage
+	\begin{prop}
+	Majoration du degré de $f(X)$ : \\
+	On pose $s_{+}(X) = q(X+1)+r(X)$, $s_{-}(X) = q(X+1)-r(X)$
+	\begin{itemize}
+	\item Si deg $s_{-}(X) \neq $ deg $s_{+}(X)-1$ alors 
+		$$deg \ f(X) = deg \ p(X) - max(deg \ s_{-}(X),\ deg \ s_{+}(X) - 1)$$
+    \item Si l = deg $s_{-}(X) = $ deg $s_{+}(X)-1$ \\
+    	On écrit : $s_{-}(X) = u_lX^l + ... $ et $s_{+}(X) = v_{l+1}X^{l+1} + ... $ \\
+    	On pose $n_0 = -2\frac{u_l}{u_{l+1}}$\\
+    	Alors $deg \ f \leq  \left\{  \begin{array}{ll}
+        deg \ p -l & \mbox{si } n_0 \notin \mathbb{N} \\
+        max(deg \ p-l, n_0) & \mbox{sinon.}
+    \end{array}
+    \right.$
+	\end{itemize}
+	\end{prop}
+	
+	\subsection*{Exemple : $\sum_{k=0}^n k^2$}
+	\begin{itemize}
+	
+\item	$a_n = n^2$, $\frac{a_n}{a_{n-1}} = \frac{n^2}{n^2-2n+1}$ donc $R(X) = \frac{X^2}{X^2-2X+1}$\\ \\
+\item    On écrit $R(X) = \frac{p(X)q(X)}{p(X-1)r(X)}$ : on trouve $p(X) = X^2$, $q(X) = r(X) = 1$. \\
+    
+\item    On cherche f vérifiant (*) : $p(X) = q(X+1)f(X)-f(X-1)r(X)$.\\ \\
+    La majoration donne f de degré au plus \textbf{3}.
+    
+\item    On cherche donc f sous la forme $f(X) = w_0 + w_1X+ w_2X^2+w_3X^3$
+    
+    (*) s'écrit $X^2 = (w_1 - w_2 + w_3) + (2 w_2-3w_3) X  + 3 w_3 X^2$ donc matriciellement : 
+    $$
+    \left(
+  \begin{array}{ c c c c }
+   0 & 1 & -1 & 1  \\
+   0 & 0 & 2  & -3 \\
+   0 & 0 & 0  & 3  \\
+   0 & 0 & 0  & 0
+  \end{array} \right) 
+      \left(
+  \begin{array}{ c }
+     w_0  \\
+     w_1  \\
+     w_2  \\
+     w_3
+  \end{array} \right) = 
+   \left(
+    \begin{array}{ c }
+     0  \\
+     0  \\
+     1  \\
+     0
+  \end{array} \right)
+	$$
+
+\item On trouve alors $f(X) =  1/3 X^3 +  1/2 X^2 +  1/6 X$.\\
+Donc $\alpha(X) = \frac{q(X+1)}{p(X)}f(X) = f(X)/X^2 $ \\
+Puis $S_n = n^2 \alpha(n) = 1/3 n^3 +  1/2 n^2 +  1/6 = \frac{n(n+1)(2n+1)}{6}$
+
+\end{itemize}
+\end{document}
+

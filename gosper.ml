@@ -164,9 +164,43 @@ let print = function
   | None -> print_endline "pas de solution."
   | Some alpha -> print_endline $ Q.print alpha
 ;;
+
+let solve_q a_n k0 = 
+  let a_n = Q.normalise a_n in
+  let q = Q.mult a_n (Q.inv (Q.eval_k a_n (C.minus C.one))) in
+  match solve q with
+    | None -> print_endline "pas de solution"
+    | Some q' -> 
+      let s =  (Q.mult q' a_n) in
+      let s0 = Q.eval s (k0-1, 1) in
+      print_endline $ Q.print (Q.add s (Q.minus ([(s0, 0)], [((1,1), 0)])))
+;;
+let q = (Q.normalise ([((1, 1), 2)], [((1, 1), 0); ((-2, 1), 1); ((1, 1), 2)]));;
+let p,q,r = calcul_pqr q;;
+majoration_degre_f (p, q, r);;
+let v = make_vector 3 p ();;
+
+M.print m;;
+let m =  make_matrix 3 (p,q,r) ();;
+let Some w = M.find_a_solution m v ;;
+      let f = ref [] in
+      for i = 0 to 3 do
+        if w.(i).(0) <> C.zero then f:= (w.(i).(0), i)::!f;
+      done; !f;;
+P.print ([((1, 3), 3); ((1, 2), 2); ((1, 6), 1)]);;
+
 (* Exemple : a_n = n^2 *)
 (* a_n/a_(n-1) = n^2 / (n-1)^2 = R(n) avec R = X^2 / (X-1)^ 2*)
 print $ solve (Q.normalise ([((1, 1), 2)], [((1, 1), 0); ((-2, 1), 1); ((1, 1), 2)]));;
+
+(* On peut aussi utiliser solve_q si a_n est une fraction rationelle en n : solve_q a_n n0 renvoit directement sum k = n0 à n de a_n :  *)
+
+solve_q ([((1, 1), 3)], [((1,1), 0)]) 0;;
+solve_q ([((1, 1), 1)], [((1,1),0)]) 0 ;;
+solve_q ([((1, 1), 0)], [((1,1),2); ((1,1), 1)]) 1;;
+solve_q ([((1, 1), 0)], [((2,1),1); ((3,1), 2); ((1,1), 3)]) 1;;
+
+
 
 (* Exemple : a_n = n *)
 (* a_n/a_(n-1) = n/(n-1) = R(n) avec R = X/(X-1)*)

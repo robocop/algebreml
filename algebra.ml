@@ -221,7 +221,11 @@ module Poly =
 	 | p -> p):polynom)
      ;;
      let print (p:polynom) = 
-       let print_monome (x, d) = Printf.sprintf "%sX^%d" (C.print x) d in
+       let print_monome (x, d) = match d with
+	 | 0 -> C.print x
+	 | 1 -> Printf.sprintf "%sX" (C.print x)
+	 | d -> Printf.sprintf "%sX^%d" (C.print x) d 
+       in
        let rec print = function
 	 | [] -> ""
 	 | [x] -> print_monome x
@@ -332,6 +336,7 @@ module Frac = functor (C : DRing) ->
     *)
     type frac = P.polynom * P.polynom
     let normalise ((p,q):frac) = 
+      let p, q = P.normalise p, P.normalise q in
       let a = P.gcd p q in
       let p', _ = P.div_euclide p a in
       let q', _ = P.div_euclide q a in
@@ -360,6 +365,10 @@ module Frac = functor (C : DRing) ->
     let inv ((p,q):frac) = 
       	if q = P.zero then raise Division_by_zero
 	else normalise (q,p)
+    let eval ((p,q):frac) (x:C.elem) = 
+      C.mult (P.eval p x) (C.inv (P.eval q x))
+    let eval_k ((p, q):frac) (x:C.elem) =
+      normalise (P.eval_k p x, P.eval_k q x)
 
     module DRing_F:DRing with type elem= frac =
     struct
