@@ -9,7 +9,7 @@ open Algebra
 
 (* Calcul des zéros d'un polynome rationnel *)
 let p = P.normalise [((5,1),7); ((11,12),6); ((-229,4),5); ((257,4),4); ((-137,4),3); ((190,3),2); ((28,1),1)];;
-rat_zeros p
+P.rat_zeros p
 
 (* Calcul du résultant de deux polynomes : *)
 let p = [((1,1), 0); ((1, 1), 2)];;
@@ -19,11 +19,11 @@ let q = [((3,1), 0);((2,1), 1); ((1,1), 4)];;
 
 
 (* Calcul du polynome caractéristique d'un endomorphisme *)
-module M = M(DRing_Rat);;
+module M = Matrix(DRing_Rat);;
 let m = [|[|(0,1); (4,1)|];
 	  [|(4,3); (3,1)|];
 	|];;
-M.pc m;;
+print_endline (P.print (M.pc m));;
 
 
 

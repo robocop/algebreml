@@ -1,5 +1,4 @@
 open Algebra;;
-P.zero;;
 (* Notations : *)
 (* S_n = sum_k = 0 ^ n (a_k) *)
 (* S_n / S_(n-1) doit etre une fraction rationelle pour que l'algorithme fonctionne *)
@@ -12,7 +11,6 @@ P.zero;;
 (* a_n/a_(n-1) = n^2 / (n-1)^2 = R(n) avec R = X^2 / (X-1)^ 2*)
 
 module C = DRing_Rat;;
-module P = Poly(DRing_Rat);;
 module Q = Frac(DRing_Rat);;
 module Py = Poly(Q.DRing_F);;
 let natural (p,q) = q = 1 && p >= 0;;
@@ -45,7 +43,7 @@ let rec calcul (p,q,r) gR =
  
   (* On construit le polynome q(X) sur le corps (Q[Y])[X] *)
   let q' = plongement q in
-  let rat_roots = rat_zeros (fst (Py.resultant q' r')) in
+  let rat_roots = P.rat_zeros (fst (Py.resultant q' r')) in
  
 
   
@@ -130,7 +128,7 @@ let make_matrix d (p,q,r) () =
     let pk = calcul_Pk k (p,q,r) in
     List.iter (fun (e, q) -> m.(q).(k) <- e) pk;
   done;
-  (m:M.matrix)
+  (m:M.t)
 ;;
 
 

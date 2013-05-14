@@ -37,20 +37,22 @@ module DRing_Rat :
     val inv : elem -> elem
     val print : elem -> string
   end
+(*
 module Matrix :
   functor (C : DRing) ->
     sig
-      type matrix = C.elem array array
-      val size : matrix -> int * int
-      val get : matrix -> int * int -> C.elem
-      val print : matrix -> unit
-      val swap : matrix -> int * int -> unit
-      val copy : matrix -> C.elem array array
-      val map : (C.elem -> 'a) -> matrix -> 'a array array
-      val det : matrix -> C.elem
-      val forme_echelonnee : matrix -> matrix -> matrix * matrix
-      val find_a_solution : matrix -> matrix -> matrix option
+      type t = C.elem array array
+      val size : t -> int * int
+      val get : t -> int * int -> C.elem
+      val print : t -> unit
+      val swap : t -> int * int -> unit
+      val copy : t -> C.elem array array
+      val map : (C.elem -> 'a) -> t -> 'a array array
+      val det : t -> C.elem
+      val forme_echelonnee : t -> t -> t * t
+      val find_a_solution : t -> t -> t option
     end
+*)
 module Poly :
   functor (C : DRing) ->
     sig
@@ -100,15 +102,26 @@ module Frac :
           val print : elem -> string
         end
     end
-module M :
-  functor (C : DRing) ->
+
+
+module Matrix : functor (C : DRing) ->
     sig
-      type matrix
-      type polynom
-      val pc : matrix -> polynom
+      type t = C.elem array array
+      val size : t -> int * int
+      val get : t -> int * int -> C.elem
+      val print : t -> unit
+      val swap : t -> int * int -> unit
+      val copy : t -> C.elem array array
+      val map : (C.elem -> 'a) -> t -> 'a array array
+      val det : t -> C.elem
+      val forme_echelonnee : t -> t -> t * t
+      val find_a_solution : t -> t -> t option
+      type polynom =  (C.elem * int) list
+      val pc : t -> polynom
     end
 
-module P :
+
+ module P :
   sig
     exception Empty
     type polynom = (DRing_Rat.elem * int) list
@@ -130,5 +143,5 @@ module P :
     val gcd : polynom -> polynom -> polynom
     val eval : polynom -> DRing_Rat.elem -> DRing_Rat.elem
     val resultant : polynom -> polynom -> DRing_Rat.elem
+    val rat_zeros : polynom -> DRing_Rat.elem list
   end
-val rat_zeros : P.polynom -> DRing_Rat.elem list

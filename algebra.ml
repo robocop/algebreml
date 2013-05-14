@@ -62,15 +62,15 @@ module DRing_Rat:DRing with type elem= Rationnal.rat =
 
 
 
-module Matrix = functor (C : DRing) ->
+module Matrix0 = functor (C : DRing) ->
   struct
-    type matrix = C.elem array array
+    type t = C.elem array array
     (* M € M_n,p p = rows, m = colums *)
     (* size M = (p,n) *)
-    let size (m:matrix) = Array.length m, Array.length m.(0)
+    let size (m:t) = Array.length m, Array.length m.(0)
     (* i € [|1,p|] & j € [|1,n|] *)
-    let get (m:matrix) (i,j) = (m.(i-1)).(j-1)
-    let print (m:matrix) = 
+    let get (m:t) (i,j) = (m.(i-1)).(j-1)
+    let print (m:t) = 
       let p,n = size m in
       for i = 1 to p do
 	for j = 1 to n do
@@ -79,14 +79,14 @@ module Matrix = functor (C : DRing) ->
 	print_newline();
       done
     (* Echange les lignes i et i' *)
-    let swap (m:matrix) (i,i') =
+    let swap (m:t) (i,i') =
       let tmp = m.(i-1) in
       m.(i-1) <- m.(i'-1);
       m.(i'-1) <- tmp
-    let copy (m:matrix) = Array.map Array.copy m
-    let map f (m:matrix)  = Array.map (fun l -> Array.map f l) m
-    let det (m:matrix) = 
-      let rec det' (m:matrix) k n = 
+    let copy (m:t) = Array.map Array.copy m
+    let map f (m:t)  = Array.map (fun l -> Array.map f l) m
+    let det (m:t) = 
+      let rec det' (m:t) k n = 
         (* Si on est sur un bloc 1*1 c'est terminé *)
 	if k = n then get m (n,n)
 	else 
@@ -123,12 +123,12 @@ module Matrix = functor (C : DRing) ->
 	let nm = copy m in
 	det' nm 1 n
 	  (* m matrice n*n, v vecteur (v matrice n*1 ) *)
-    let forme_echelonnee (m:matrix) (v:matrix) = 
+    let forme_echelonnee (m:t) (v:t) = 
       let n, p = size m in
       let n', p' = size v in
       if not (n = p && p' = 1) then failwith "matrice non carrée ou vecteur de la mauvaise taille"
       else
-	let rec calc (m:matrix) (v:matrix) k n = 
+	let rec calc (m:t) (v:t) k n = 
           (* Si on est sur un bloc 1*1 c'est terminé *)
 	  if k = n then (m, v)
 	  else 
@@ -170,10 +170,10 @@ module Matrix = functor (C : DRing) ->
        soit un sous espace affine de codimension r, r rang de M *)
     (* Renvoit donc soit None (cas de l'ensemble vide), 
        soit Some X, X vecteur n*1 appartenant à l'ensemble des solution *)
-    let find_a_solution (m:matrix) (v:matrix) = 
+    let find_a_solution (m:t) (v:t) = 
       let m', v' = forme_echelonnee m v in
       let n, _ = size m' in
-      let rec find (x:matrix) k = 
+      let rec find (x:t) k = 
 	if k = 0 then Some x
 	else
 	  (* On trouve si elle existe la première composante non nulle de la ligne k *)
@@ -296,12 +296,12 @@ module Poly = functor ( C : DRing) ->
 	 | (e,d') :: l  when d = d' -> horner (C.add (C.mult x r) e) (d-1) l
 	 | l -> horner (C.mult x r) (d-1) l
        in
-      
-       let (a,d)::p' = List.rev p in
-       horner a (d-1) p'
+       match List.rev p with
+	 | [] -> raise Empty
+	 | (a,d)::p' ->  horner a (d-1) p'
 
          (* Résultant de deux polynome normalisé non constants *)
-     module M = Matrix(C)
+     module M = Matrix0(C)
      let resultant p1 p2 = 
        let d1 = degre p1 in
        let d2 = degre p2 in
@@ -385,27 +385,27 @@ module Frac = functor (C : DRing) ->
 
 
 
-module M = functor (C : DRing) ->
+module Matrix = functor (C : DRing) ->
   struct
     module F0 = Frac(C)
     module F = F0.DRing_F
-    module M1 = Matrix(F)  
-    module M0 = Matrix(C)
-    type matrix = M0.matrix
+    module M1 = Matrix0(F)  
+    include Matrix0(C)
+    
     type polynom = F0.P.polynom
 
     let e (x:C.elem) = (([(x,0)], [C.one, 0]) : F.elem )
 
-    let pc (m:M0.matrix) = 
-      let p, n = M0.size m in
+    let pc (m:t) = 
+      let p, n = size m in
       let m' = Array.make_matrix p n (F.zero) in
       for i = 1 to p do
 	for j = 1 to n do
 	  let x = ([(C.one, 1)], [(C.one, 0)]) in
 	  if i = j then 
-	    m'.(i-1).(j-1) <- F.add x (F.minus (e (M0.get m (i,j))))
+	    m'.(i-1).(j-1) <- F.add x (F.minus (e (get m (i,j))))
 	  else 
-	    m'.(i-1).(j-1) <- F.minus (e (M0.get m (i,j)))
+	    m'.(i-1).(j-1) <- F.minus (e (get m (i,j)))
 	done;
       done;
         (fst (M1.det m'):polynom)
@@ -414,27 +414,28 @@ module M = functor (C : DRing) ->
 
 
   
-module P = Poly (DRing_Rat);;  
+module P = struct
+  include Poly (DRing_Rat)
+  let rat_zeros (p:polynom) = 
+    let rec couples l1 l2 = match l1 with
+      | [] -> []
+      | x::xs -> 
+	let rec add = function
+	  | [] -> []
+	  | y::r when y > 0  && ((abs x <= 1) || Integers.gcd x y = 1) -> (x,y)::add r
+	  | _::r -> add r
+	in
+	add l2 @ couples xs l2
+    in
+    let q, r = div_euclide p x in
+    let p = if r = zero then q else p in
+    let g = Integers.ppcm_list (List.map (fun ((p,q),_) -> q) p) in
+    let f x = fst (DRing_Rat.mult x (g,1)) in
+    let a0, an = f (a0 p), f (an p) in
+    let zeros_possibles = couples (Integers.div a0) (Integers.div an) in
+    let l = List.filter (fun z -> eval p z = DRing_Rat.zero) zeros_possibles in
+    if r = zero then DRing_Rat.zero::l else l
+    
+end
 
 
-let rat_zeros (p:P.polynom) = 
-  let rec couples l1 l2 = match l1 with
-    | [] -> []
-    | x::xs -> 
-      let rec add = function
-	| [] -> []
-	| y::r when y > 0  && ((abs x <= 1) || Integers.gcd x y = 1) -> (x,y)::add r
-	| _::r -> add r
-      in
-      add l2 @ couples xs l2
-  in
-  let q, r = P.div_euclide p P.x in
-  let p = if r = P.zero then q else p in
-  let g = Integers.ppcm_list (List.map (fun ((p,q),_) -> q) p) in
-  let f x = fst (DRing_Rat.mult x (g,1)) in
-  let a0, an = f (P.a0 p), f (P.an p) in
-  let zeros_possibles = couples (Integers.div a0) (Integers.div an) in
-  let l = List.filter (fun z -> P.eval p z = DRing_Rat.zero) zeros_possibles in
-  if r = P.zero then DRing_Rat.zero::l else l
-
-;;
