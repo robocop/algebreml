@@ -1,0 +1,40 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Algebra" rel="Chapter" href="Algebra.html"><title>Algebra.Poly</title>
+</head>
+<body>
+<code class="code"><span class="keyword">functor</span>&nbsp;(<span class="constructor">C</span>&nbsp;:&nbsp;<span class="constructor">DRing</span>)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;<span class="keyword">sig</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;polynom&nbsp;=&nbsp;(<span class="constructor">C</span>.elem&nbsp;*&nbsp;int)&nbsp;list<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;zero&nbsp;:&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;one&nbsp;:&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;x&nbsp;:&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;normalise&nbsp;:&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;print&nbsp;:&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;add&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;minus&nbsp;:&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;mult_monome&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">C</span>.elem&nbsp;*&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;mult&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;pow&nbsp;:&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;eval_k&nbsp;:&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">C</span>.elem&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;degre&nbsp;:&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;an&nbsp;:&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">C</span>.elem<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;a0&nbsp;:&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">C</span>.elem<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;div_euclide&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;*&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;gcd&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;eval&nbsp;:&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">C</span>.elem&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">C</span>.elem<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;resultant&nbsp;:&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Algebra</span>.<span class="constructor">Poly</span>.polynom&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">C</span>.elem<br>
+&nbsp;&nbsp;<span class="keyword">end</span></code></body></html>
