@@ -168,5 +168,41 @@ Donc $\alpha(X) = \frac{q(X+1)}{p(X)}f(X) = f(X)/X^2 $ \\
 Puis $S_n = n^2 \alpha(n) = 1/3 n^3 +  1/2 n^2 +  1/6 = \frac{n(n+1)(2n+1)}{6}$
 
 \end{itemize}
+\newpage
+\subsection*{Programmation de l'algorithme en \textbf{Ocaml}}
+	
+	Programmation difficile car il faut en particulier : 
+	\begin{itemize}
+	\item Gérer les polynômes, les fractions rationelles sur $\mathbb{Q}$
+	\item Gérer les matrices
+	\item Calculer le résultant de deux polynômes de $\mathbb{(Q[X])[Y]}$
+	\item Résoudre un système linéaire
+	\item Trouver les racines entières d'un pôlynome
+	\end{itemize}
+	
+	\textbf{Solution : } développer une librairie d'algèbre en Ocaml travaillant sur un corps quelconque. \\
+	On utilise les fonctionnalités de \textbf{Modules} d'Ocaml : module, module de type et foncteurs.
+	\subsubsection*{Définition d'un corps en Ocaml}
+	\begin{lstlisting}
+	module type DRing = sig
+   	type elem
+  	val zero: elem
+  	val one : elem
+   	val add : elem -> elem -> elem
+   	val minus : elem -> elem
+    val mult : elem -> elem -> elem
+    val inv : elem -> elem
+    val print : elem -> string
+	end
+	\end{lstlisting}
+	\subsubsection*{Utilisation des foncteurs}
+	On prend un module en paramètre pour créer un nouveau module : 
+	\begin{lstlisting}
+	module Matrix = functor (C : DRing) ->
+  	struct
+  	type matrix = C.elem array array
+  	  (* ... *)
+  	end
+  	\end{lstlisting}
 \end{document}
 

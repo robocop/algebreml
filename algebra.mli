@@ -107,6 +107,7 @@ module M :
       type polynom
       val pc : matrix -> polynom
     end
+
 module P :
   sig
     exception Empty
@@ -128,19 +129,6 @@ module P :
     val div_euclide : polynom -> polynom -> polynom * polynom
     val gcd : polynom -> polynom -> polynom
     val eval : polynom -> DRing_Rat.elem -> DRing_Rat.elem
-    module M :
-      sig
-        type matrix = DRing_Rat.elem array array
-        val size : matrix -> int * int
-        val get : matrix -> int * int -> DRing_Rat.elem
-        val print : matrix -> unit
-        val swap : matrix -> int * int -> unit
-        val copy : matrix -> DRing_Rat.elem array array
-        val map : (DRing_Rat.elem -> 'a) -> matrix -> 'a array array
-        val det : matrix -> DRing_Rat.elem
-        val forme_echelonnee : matrix -> matrix -> matrix * matrix
-        val find_a_solution : matrix -> matrix -> matrix option
-      end
     val resultant : polynom -> polynom -> DRing_Rat.elem
   end
 val rat_zeros : P.polynom -> DRing_Rat.elem list

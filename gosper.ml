@@ -1,5 +1,5 @@
-#use "algebra.ml";;
-
+open Algebra;;
+P.zero;;
 (* Notations : *)
 (* S_n = sum_k = 0 ^ n (a_k) *)
 (* S_n / S_(n-1) doit etre une fraction rationelle pour que l'algorithme fonctionne *)
@@ -175,19 +175,6 @@ let solve_q a_n k0 =
       let s0 = Q.eval s (k0-1, 1) in
       print_endline $ Q.print (Q.add s (Q.minus ([(s0, 0)], [((1,1), 0)])))
 ;;
-let q = (Q.normalise ([((1, 1), 2)], [((1, 1), 0); ((-2, 1), 1); ((1, 1), 2)]));;
-let p,q,r = calcul_pqr q;;
-majoration_degre_f (p, q, r);;
-let v = make_vector 3 p ();;
-
-M.print m;;
-let m =  make_matrix 3 (p,q,r) ();;
-let Some w = M.find_a_solution m v ;;
-      let f = ref [] in
-      for i = 0 to 3 do
-        if w.(i).(0) <> C.zero then f:= (w.(i).(0), i)::!f;
-      done; !f;;
-P.print ([((1, 3), 3); ((1, 2), 2); ((1, 6), 1)]);;
 
 (* Exemple : a_n = n^2 *)
 (* a_n/a_(n-1) = n^2 / (n-1)^2 = R(n) avec R = X^2 / (X-1)^ 2*)
