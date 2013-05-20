@@ -255,9 +255,86 @@ f =  3384 +  1728x +  216x^2
 Resultat : ( 6 +  323/36 x +  10/3 x^2 +  13/36 x^3)/( 60 +  47x +  12x^2 +  1x^3)
     		\end{lstlisting}
     		On a donc $\sum_{k=0}^n \frac{1}{(k+2)(k+5)} = \frac{216+323 n+120 n^2+13 n^3}{36 \left(60+47 n+12 n^2+n^3\right)}$
+    		
+    	\newpage
     		\item $ \sum_{k=1}^n {\frac{n^3-2n^2-1}{n^4+n^2+1}(n-1)!}$ \\
-    		$\frac{a_n}{a_{n-1}} = \frac{3-6 n+10 n^2-16 n^3+14 n^4-6 n^5+n^6}{-4+3 n-2 n^2+3 n^3-4 n^4+n^5} $ 
+    		$\frac{a_n}{a_{n-1}} = \frac{3-6 n+10 n^2-16 n^3+14 n^4-6 n^5+n^6}{-4+3 n-2 n^2+3 n^3-4 n^4+n^5} $ \\
+    		\begin{lstlisting}
+#let gR = [((3, 1), 0); ((-6, 1), 1); ((10, 1), 2); ((-16,1), 3); ((14,1), 4); ((-6,1),5); ((1,1), 6)], [((-4, 1), 0); ((3, 1), 1); ((-2,1),2); ((3,1), 3); ((-4,1), 4); ((1,1), 5)];;
+print $ solve gR;;
+    		
+p =  -21/16  +  -21/8 x^2 +  21/16 x^3
+q =  -16/7  +  32/7 x +  -64/21 x^2 +  16/21 x^3
+r =  16/21  +  16/21 x +  16/21 x^2
+majoration du degre : d = 0
+f =  441/256 
+Resultat : ( 1x +  -1x^2 +  1x^3)/( -1 +  -2x^2 +  1x^3)- : unit = ()
+    		\end{lstlisting}
+    		Donc $S_n = a_n\frac{n - n^2 + n^3}{-1 - 2 n^2 + n^3} = \frac{n!}{1+n+n^2}$
+    		
+    		\item $\sum_{k=0}^n \frac{1}{k!}$\\
+    		$\frac{a_n}{a_{n-1}} = \frac{1}{n}$\\
+    		\begin{lstlisting}
+# print $ solve (Q.normalise ([((1, 1), 0)], [((1, 1), 1)]));;
+p =  1
+q =  1
+r =  1x
+majoration du degre : d = -1
+pas de solution.
+    		\end{lstlisting}   		
     		\end{itemize}
-
+	Il n'existe donc pas d'expression "fermée" de $\sum_{k=0}^n \frac{1}{k!}$.
+	\section*{Calcul des racines entières d'un polynome rationnel}
+	$a_0 + a_1X + ... + a_dX^d \in \mathbb{Z[X]}$\\
+	Soit p $\in \mathbb{N}$ tel que $a_0 + a_1p + ... + a_dp^d = 0$\\
+	Alors $a_0 = -p(a_1 + ... + a_np^{d-1})$\\
+	Donc \textbf{p divise $a_0$}
+	\section*{Preuve de la proposition 1 : }
+	$\frac{S_n}{S_{n-1}}$ est une fraction rationelle en n ssi il existe deux fractions rationelles $R(X)$ et $\alpha(X)$ telles que : 
+	 \begin{itemize}
+	 \item $\forall n \in \mathbb{N}$, $\frac{a_n}{a_{n-1}} = R(n)$
+	 \item $\forall n \in \mathbb{N}$, $S_n = \alpha(n)a_n$
+	 \end{itemize}
+	 \textbf{Preuve : }\\
+	 \begin{itemize}
+	 \item C'est suffisant : $\frac{S_n}{S_{n-1}} = \frac{\alpha(n)a_n}{\alpha(n-1)a_{n-1}} = \frac{\alpha(n)R(n)}{\alpha(n-1)}$ fraction rationelle en n.
+	 \item C'est nécessaire : supposons que $\frac{S_n}{S_{n-1}} = \sigma(n)$ est une fraction rationelle en n.\\
+	 On a $\frac{a_n}{a_{n-1}} = \frac{S_n-S_{n-1}}{S_{n-1}-S_{n-2}} = \frac{S_n-S_{n-1}}{S_{n-1}(1-\frac{S_{n-2}}{S_{n-1}})} = \frac{\sigma(n)-1}{1-\frac{1}{\sigma(n-1)}}$ \\
+	 Donc $R(X) = \frac{\sigma(X)-1}{1-\frac{1}{\sigma(X-1)}}$\\
+	 Et $a_n = S_n-S_{n-1} = S_n(1-\frac{1}{\sigma(n)})$ donc $S_n = \frac{1}{1-\frac{1}{\sigma(n)}}a_n$\\
+	 Donc $\alpha(X) =  \frac{1}{1-\frac{1}{\sigma(X)}}$
+	 \end{itemize}
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	\newpage
+	\section*{Preuve de la proposition 3}
+	\begin{itemize}
+	\item On a $1 = \frac{S_n-S_{n-1}}{a_n} = \frac{\alpha(n)a_n-\alpha(n-1)a_{n-1}}{a_n} = \alpha(n) - \frac{\alpha(n-1)}{R(n)}$\\
+	Donc $1 = \alpha(n)-\frac{\alpha(n-1)p(n-1)r(n)}{p(n)q(n)}$\\
+	Donc $\forall n \in \mathbb{N}, p(n)q(n) = \alpha(n)p(n)q(n) - \alpha(n-1)p(n-1)r(n)$
+	\item On pose $\beta(X) = \alpha(X)p(X)$\\
+	On a donc $p(X)q(X) = \beta(X)q(X)-\beta(X-1)r(X)$
+	\item $\beta$ est un polynôme !\\
+	Supposons par l'absurde que ça ne soit pas le cas. Soit $z$ un pôle (complexe) de $\beta$.
+		\begin{itemize}
+		\item $p(X)q(X) = \beta(X)q(X)-\beta(X-1)r(X)$ donc : \\
+		$z$ pôle complexe de $\beta(X-1)$ ou $q(z) = 0$
+		\item $p(X+1)q(X+1) = \beta(X+1)q(X+1)-\beta(X)r(X+1)$ donc : \\
+		$z$ pôle complexe de $\beta(X+1)$ ou $r(z+1) = 0$
+		\item $\beta$ a un nombre fini de pôles, donc il existe $z$ : $z$ pôle de $\beta$ et $z-1$ n'est pas pôle de $\beta$.
+		\item $z-1$ n'est pas pôle de $\beta$ donc $z$ n'est pas pôle de $\beta(X-1)$. \\
+		Donc $q(z) = 0$.\\
+		$\forall k \in \mathbb{N}$, $q(X) \wedge r(X+k) = 1 $, donc $\forall k \in \mathbb{N}, r(z+k) \neq 0$.\\
+		Donc $z+1$ pôle de $\beta$ et par récurrence : $\forall k \in \mathbb{N}$ : $z+k$ pôle de $\beta$.
+		\item Donc $\beta$ a un nombre infini de pôles, c'est absurde, donc $\beta$ est un polynôme.
+		\end{itemize}
+	\item $p(X+1)q(X+1) = \beta(X+1)q(X+1)-\beta(X)r(X+1)$ et \\$q(X+1)\wedge r(X+1) = 1$ donc $\beta(X) = f(X)q(X+1)$, f polynôme.
+	On a alors :  $$p(X) = q(X+1)f(X)-f(X-1)r(X)$$ $$\alpha(X) = \frac{q(X+1)}{p(X)}f(X)$$
+	\end{itemize}
 \end{document}
 

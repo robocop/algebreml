@@ -27,8 +27,6 @@ print_endline (Q.print gR);;
 let rec calcul (p,q,r) gR = 
   (* Pour tout k € N, q(X) et r(X+k) sont premiers entres deux 
   <=> le polynome en Y : R(q(X), r(X+Y)) (résultant par rapport à X) s'anulle dans N *)
-  Printf.printf "p = %s\nq = %s\nr = %s\n" (P.print p) (P.print q) (P.print r);
-  flush stdout;
 
   (* Plongement prend un polynome P € Q[X] et le plonge dans (K[Y])[X] *)
   let plongement p = 
@@ -40,18 +38,25 @@ let rec calcul (p,q,r) gR =
   if P.degre q = 0 || P.degre r = 0 then (p,q,r)
   else 
     begin
-  (* On construit le polynome r(X+Y) *)
-      let r' = Py.eval_k (plongement r) (P.x, P.one) in
+      let int_roots = 
+	let r1 = P.eval_k r C.one in
+	if P.resultant q r1 = C.zero then [C.one]
+	else
+	  begin
+	    let r2 = P.eval_k r (2,1) in
+	    if P.resultant q r2 = C.zero then [(2,1)]
+	    else 
+	      (* On construit le polynome r(X+Y) *)
+	      let r' = Py.eval_k (plongement r) (P.x, P.one) in
  
-  (* On construit le polynome q(X) sur le corps (Q[Y])[X] *)
-      let q' = plongement q in
-      let resultant = Py.resultant q' r' in
-      print_endline (Q.print resultant);
-      flush stdout;
-      let int_roots = P.int_zeros (fst resultant) in
- 
-
-  
+	    (* On construit le polynome q(X) sur le corps (Q[Y])[X] *)
+	      let q' = plongement q in
+	      let resultant = Py.resultant q' r' in
+	      print_endline (Q.print resultant);
+	      flush stdout;
+              P.int_zeros (fst resultant)
+	  end
+      in
       match int_roots with
 	| [] -> (p,q,r)
 	| (k, _)::_ -> (* q(X) et r(X+k) ne sont pas premiers entres eux *)
@@ -119,8 +124,8 @@ let majoration_degre_f (p, q, r) =
 (* f(X) = w0 + w1X + ... + wd X^d *)
 (* On résoud : p(X) = q(X+1)f(X) - f(X-1)r(X) *)
 
-(* qui s'écrit : sum_{p = 0}^d_{w_p * Pp(X)} = p(X) *)
-(* avec Pp(X) = X^p*Q(X+1) -r(X)*(X-1)^k *)
+(* qui s'écrit : sum_{k = 0}^d_{w_k * Pk(X)} = p(X) *)
+(* avec Pk(X) = X^k*Q(X+1) -r(X)*(X-1)^k *)
 
 let calcul_Pk k (p,q,r) = 
   let x_p = [(1,1), k] in
@@ -131,8 +136,8 @@ module M = Matrix(DRing_Rat);;
 
 (* W = [w0; w1;... wd] alors p(X) = q(X+1)f(X) - f(X-1)r(X) s'écrit : *)
 (* M W = B avec M = make_matrix () et B = make_vector () *)
-let make_matrix d (p,q,r) () = 
-  let m = Array.make_matrix (d+1) (d+1) (0,1) in
+let make_matrix (d,d') (p,q,r) () = 
+  let m = Array.make_matrix (d'+1) (d'+1) (0,1) in
   for k = 0 to d do
     let pk = calcul_Pk k (p,q,r) in
     List.iter (fun (e, q) -> m.(q).(k) <- e) pk;
@@ -141,21 +146,25 @@ let make_matrix d (p,q,r) () =
 ;;
 
 
-let make_vector d p () = 
-  let b = Array.make (d+1) [|(0,1)|] in
+
+let make_vector d' p () = 
+  let b = Array.make (d'+1) [|(0,1)|] in
   List.iter (fun (e, q) -> b.(q) <- [|e|]) p;
   b
 ;;
+
 let solve gR =
   let p, q, r = calcul_pqr gR in
   Printf.printf "p = %s\nq = %s\nr = %s\n" (P.print p) (P.print q) (P.print r);
   flush stdout;
   let d = majoration_degre_f (p, q, r) in
-  Printf.printf "majoration du degre : %d\n" d;
+  let d' = max d (P.degre p) in
+  Printf.printf "majoration du degre : d = %d, d' = %d \n" d d';
+  flush stdout;
   if d < 0 then None
   else
-    let m = make_matrix d (p,q,r) () in 
-    let b = make_vector d p () in
+    let m = make_matrix (d,d') (p,q,r) () in 
+    let b = make_vector d' p () in
     match M.find_a_solution m b with
     | None -> None
     | Some w ->
@@ -186,7 +195,7 @@ let solve_q a_n k0 =
       let s0 = Q.eval s (k0-1, 1) in
       Printf.printf "Resultat : %s" $ Q.print (Q.add s (Q.minus ([(s0, 0)], [((1,1), 0)])))
 ;;
-(*
+
 (* Exemple : a_n = n^2 *)
 (* a_n/a_(n-1) = n^2 / (n-1)^2 = R(n) avec R = X^2 / (X-1)^ 2*)
 print $ solve (Q.normalise ([((1, 1), 2)], [((1, 1), 0); ((-2, 1), 1); ((1, 1), 2)]));;
@@ -243,8 +252,15 @@ print $ solve (Q.normalise ([((2, 1), 0); ((-3, 1), 1); ((1, 1), 2)], [((-1, 1),
 
 ;;
 
-*)
-  let r = [((3, 1), 0); ((-6, 1), 1); ((10, 1), 2); ((-16,1), 3); ((14,1), 4); ((-6,1),5); ((1,1), 6)], [((-4, 1), 0); ((3, 1), 1); ((-2,1),2); ((3,1), 3); ((-4,1), 4); ((1,1), 5)];;
-Q.print r;;
 
-print $ solve r;;
+  let gR = [((3, 1), 0); ((-6, 1), 1); ((10, 1), 2); ((-16,1), 3); ((14,1), 4); ((-6,1),5); ((1,1), 6)], [((-4, 1), 0); ((3, 1), 1); ((-2,1),2); ((3,1), 3); ((-4,1), 4); ((1,1), 5)];;
+  print $ solve gR;;
+
+(*
+  let p, q, r = calcul_pqr gR;;
+  let d = majoration_degre_f (p,q,r);;
+  make_matrix d (p,q,r) ();;
+Q.print r;;
+P.add (P.eval_k q C.one) (P.minus r);;
+*)
+print $ solve gR;;

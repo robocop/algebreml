@@ -122,10 +122,6 @@ module Matrix0 = functor (C : DRing) ->
 	if k = n then C.mult res (get m (n,n))
 	else
           begin
-	    print m;
-	    print_newline();
-	    flush stdout;
-	    
 	  (* on trouve le pivot *)
 	    let t = ref false in
 	    let k' = ref k in
@@ -356,8 +352,6 @@ module Poly = functor ( C : DRing) ->
        for l = d2+1 to s do
          copy_ligne l (l-d2) 0 p2;
        done;
-       M.print m;
-       flush stdout;
        M.det m
 
  end 
