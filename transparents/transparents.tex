@@ -63,10 +63,10 @@
 	\end{itemize}
 	
 	\subsection*{Formes fermées}
-	On s'interesse aux sommes  $S_n = \sum_{k=n_0}^n {a_k} $ telles que : $\frac{S_n}{S_{n-1}}$ soit une fraction rationnelle en n.
+	On s'intéresse aux sommes  $S_n = \sum_{k=n_0}^n {a_k} $ telles que : $\frac{S_n}{S_{n-1}}$ soit une fraction rationnelle en n.
 	
 	\begin{prop}
-	 $\frac{S_n}{S_{n-1}}$ est une fraction rationelle en n ssi il existe deux fractions rationelles $R(X)$ et $\alpha(X)$ telles que : 
+	 $\frac{S_n}{S_{n-1}}$ est une fraction rationnelle en n ssi il existe deux fractions rationnelles $R(X)$ et $\alpha(X)$ telles que : 
 	 \begin{itemize}
 	 \item $\forall n \in \mathbb{N}$, $\frac{a_n}{a_{n-1}} = R(n)$
 	 \item $\forall n \in \mathbb{N}$, $S_n = \alpha(n)a_n$
@@ -75,7 +75,7 @@
 
 	Si c'est le cas on dit que $S_n$ admet une forme fermée.\\ \\
 	\textbf{Algorithme de Gosper} :
-		Etant donné la fraction rationelle R(X) (determinée à l'aide de l'expression de $a_n$), l'algorithme doit determiner si la fraction rationelle $\alpha(X)$ existe et dans ce cas doit la calculer.
+		Etant donné la fraction rationnelle R(X) (determinée à l'aide de l'expression de $a_n$), l'algorithme doit déterminer si la fraction rationnelle $\alpha(X)$ existe et dans ce cas doit la calculer.
 		\newpage
 	\subsection*{Principe de l'algorithme}
 	\begin{prop}
@@ -86,7 +86,7 @@
 	 \end{itemize}
 	\end{prop}
 	\textbf{Preuve algorithmique} : \\
-	On définit séquentiellement des polynomes $p_j(X)$, $q_j(X)$ et $r_j(X)$ tels que : $R(X) = \frac{p_j(X)q_j(X)}{p_j(X-1)r_j(X)}$ : 
+	On définit séquentiellement des polynômes $p_j(X)$, $q_j(X)$ et $r_j(X)$ tels que : $R(X) = \frac{p_j(X)q_j(X)}{p_j(X-1)r_j(X)}$ : 
 		\begin{itemize}
 		\item On définit : $p_0(X) = 1$ et $R(X) = \frac{q_0(X)}{r_0(X)} $ avec $q_0(X) \wedge r_0(X) = 1$ 
 		\item Si $\forall k \in \mathbb{N}$, $q_j(X) \wedge r_j(X+k) = 1 $ on s'arrête
@@ -103,10 +103,10 @@ Comment tester algorithmiquement si :  $\forall k \in \mathbb{N}$, $q(X) \wedge 
 	
 On introduit le \textbf{résultant} par rapport à la variable $X$ des polynômes $q(X)$ et $r(X+Y)$ : \\$G(Y) = Res(q(X), r(X+Y))$ 
 
-On teste ensuite si ce polynôme G admet des racines entières.
+On teste ensuite si ce polynôme G admet des \textbf{racines entières}.
 
 	\begin{prop}
-		Si la fraction rationelle $\alpha(X)$ existe, alors elle est de la forme 
+		Si la fraction rationnelle $\alpha(X)$ existe, alors elle est de la forme 
 			$$\alpha(X) = \frac{q(X+1)}{p(X)}f(X)$$
 	    avec f(X) polynôme vérifiant l'équation fonctionelle : 
 	        $$p(X) = q(X+1)f(X)-f(X-1)r(X)$$
@@ -184,7 +184,7 @@ Puis $S_n = n^2 \alpha(n) = 1/3 n^3 +  1/2 n^2 +  1/6 = \frac{n(n+1)(2n+1)}{6}$
 	\end{itemize}
 	
 	\textbf{Solution : } développer une librairie d'algèbre en Ocaml travaillant sur un corps quelconque. \\
-	On utilise les fonctionnalités de \textbf{Modules} d'Ocaml : module, module de type et foncteurs.
+	On utilise les fonctionnalités de \textbf{Modules} d'Ocaml : modules, modules de type et foncteurs.
 	\subsubsection*{Définition d'un corps en Ocaml}
 	\begin{lstlisting}
 	module type DRing = sig
@@ -215,18 +215,18 @@ Puis $S_n = n^2 \alpha(n) = 1/3 n^3 +  1/2 n^2 +  1/6 = \frac{n(n+1)(2n+1)}{6}$
 open Algebra
 module C = DRing_Rat(* Les rationnels *)
 module Q = Frac(DRing_Rat)(*Les fractions rat.*)
-module Py = Poly(Q.DRing_F) (* Les fractions rationnelles a 2 variables*)
+module Py = Poly(Q.DRing_F) (* Les fractions rationnelles à 2 variables*)
 
-(* 1ière étape : on ecrit R sous la forme : *)
+(* 1ère étape : on écrit R sous la forme : *)
 (* R(X) = p(X)q(X) / p(X-1)r(X) avec pour tout k € N : q(X) ^ r(X+k) = 1 *)
 (* Il faut donc calculer les polynomes p, q, r *)
 
-(* 2ième étape : Majoration du degré de f *)
+(* 2ème étape : Majoration du degré de f *)
 
-(* 3ième étape calcul explicite de f(X) *)
+(* 3ème étape : calcul explicite de f(X) *)
 
-let solve R = (* *)
-let solve_q a_n k0 = (* *)
+let solve R = (* Calcul de alpha(X) à partir de R(X) *)
+let solve_q a_n k0 = (* Calcul de sum_{k=k0}^n a_k si a_n est une fraction rationnelle en n *)
   	\end{lstlisting}
   	\newpage
   	\section*{Exemples}
@@ -237,9 +237,9 @@ let solve_q a_n k0 = (* *)
 p =  1x^2
 q =  1
 r =  1
-majoration du degre : 3
+Majoration du degré : 3
 f =  1/6 x +  1/2 x^2 +  1/3 x^3
-Resultat :  1/6 x +  1/2 x^2 +  1/3 x^3
+Résultat :  1/6 x +  1/2 x^2 +  1/3 x^3
     		\end{lstlisting}
     		On a donc $\sum_{k=0}^n k^2 = 1/6 n +  1/2 n^2 +  1/3 n^3 = \frac{n(n+1)(2n+1)}{6}$
     		
@@ -250,9 +250,9 @@ Resultat :  1/6 x +  1/2 x^2 +  1/3 x^3
 p =  432 +  252x +  36x^2
 q =  -1/6  +  -1/6 x
 r =  -5/6  +  -1/6 x
-majoration du degre : 3
+Majoration du degré : 3
 f =  3384 +  1728x +  216x^2
-Resultat : ( 6 +  323/36 x +  10/3 x^2 +  13/36 x^3)/( 60 +  47x +  12x^2 +  1x^3)
+Résultat : ( 6 +  323/36 x +  10/3 x^2 +  13/36 x^3)/( 60 +  47x +  12x^2 +  1x^3)
     		\end{lstlisting}
     		On a donc $\sum_{k=0}^n \frac{1}{(k+2)(k+5)} = \frac{216+323 n+120 n^2+13 n^3}{36 \left(60+47 n+12 n^2+n^3\right)}$
     		
@@ -266,9 +266,9 @@ print $ solve gR;;
 p =  -21/16  +  -21/8 x^2 +  21/16 x^3
 q =  -16/7  +  32/7 x +  -64/21 x^2 +  16/21 x^3
 r =  16/21  +  16/21 x +  16/21 x^2
-majoration du degre : d = 0
+Majoration du degré : d = 0
 f =  441/256 
-Resultat : ( 1x +  -1x^2 +  1x^3)/( -1 +  -2x^2 +  1x^3)- : unit = ()
+Résultat : ( 1x +  -1x^2 +  1x^3)/( -1 +  -2x^2 +  1x^3)- : unit = ()
     		\end{lstlisting}
     		Donc $S_n = a_n\frac{n - n^2 + n^3}{-1 - 2 n^2 + n^3} = \frac{n!}{1+n+n^2}$
     		
@@ -279,8 +279,8 @@ Resultat : ( 1x +  -1x^2 +  1x^3)/( -1 +  -2x^2 +  1x^3)- : unit = ()
 p =  1
 q =  1
 r =  1x
-majoration du degre : d = -1
-pas de solution.
+Majoration du degre : d = -1
+Pas de solution.
     		\end{lstlisting}   		
     		\end{itemize}
 	Il n'existe donc pas d'expression "fermée" de $\sum_{k=0}^n \frac{1}{k!}$.
@@ -290,15 +290,15 @@ pas de solution.
 	Alors $a_0 = -p(a_1 + ... + a_np^{d-1})$\\
 	Donc \textbf{p divise $a_0$}
 	\section*{Preuve de la proposition 1 : }
-	$\frac{S_n}{S_{n-1}}$ est une fraction rationelle en n ssi il existe deux fractions rationelles $R(X)$ et $\alpha(X)$ telles que : 
+	$\frac{S_n}{S_{n-1}}$ est une fraction rationnelle en n ssi il existe deux fractions rationnelles $R(X)$ et $\alpha(X)$ telles que : 
 	 \begin{itemize}
 	 \item $\forall n \in \mathbb{N}$, $\frac{a_n}{a_{n-1}} = R(n)$
 	 \item $\forall n \in \mathbb{N}$, $S_n = \alpha(n)a_n$
 	 \end{itemize}
 	 \textbf{Preuve : }\\
 	 \begin{itemize}
-	 \item C'est suffisant : $\frac{S_n}{S_{n-1}} = \frac{\alpha(n)a_n}{\alpha(n-1)a_{n-1}} = \frac{\alpha(n)R(n)}{\alpha(n-1)}$ fraction rationelle en n.
-	 \item C'est nécessaire : supposons que $\frac{S_n}{S_{n-1}} = \sigma(n)$ est une fraction rationelle en n.\\
+	 \item C'est suffisant : $\frac{S_n}{S_{n-1}} = \frac{\alpha(n)a_n}{\alpha(n-1)a_{n-1}} = \frac{\alpha(n)R(n)}{\alpha(n-1)}$ fraction rationnelle en n.
+	 \item C'est nécessaire : supposons que $\frac{S_n}{S_{n-1}} = \sigma(n)$ est une fraction rationnelle en n.\\
 	 On a $\frac{a_n}{a_{n-1}} = \frac{S_n-S_{n-1}}{S_{n-1}-S_{n-2}} = \frac{S_n-S_{n-1}}{S_{n-1}(1-\frac{S_{n-2}}{S_{n-1}})} = \frac{\sigma(n)-1}{1-\frac{1}{\sigma(n-1)}}$ \\
 	 Donc $R(X) = \frac{\sigma(X)-1}{1-\frac{1}{\sigma(X-1)}}$\\
 	 Et $a_n = S_n-S_{n-1} = S_n(1-\frac{1}{\sigma(n)})$ donc $S_n = \frac{1}{1-\frac{1}{\sigma(n)}}a_n$\\
