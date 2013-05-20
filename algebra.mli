@@ -132,4 +132,5 @@ module Matrix : functor (C : DRing) ->
     val eval : polynom -> DRing_Rat.elem -> DRing_Rat.elem
     val resultant : polynom -> polynom -> DRing_Rat.elem
     val rat_zeros : polynom -> DRing_Rat.elem list
+    val int_zeros : polynom -> DRing_Rat.elem list
   end

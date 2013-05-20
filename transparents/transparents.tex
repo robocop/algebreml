@@ -1,11 +1,14 @@
-\documentclass[17 pt]{scrartcl}
+\documentclass[17 pt,french]{scrartcl}
 
-\usepackage[utf8x]{inputenc} % un package
-\usepackage[T1]{fontenc}      % un second package
-\usepackage[francais]{babel}  % un troisième package
+\usepackage{amssymb, amsmath, mathtools}
+
+\usepackage{fontspec}
+\usepackage{xunicode}
+
 \usepackage{amsfonts}
 \usepackage{array}
-\usepackage{listings}
+\usepackage{listingsutf8}
+
 \usepackage{lmodern}
 \usepackage[top=1cm, bottom=1cm, left=1cm, right=1cm]{geometry} 
 \usepackage{graphicx}
@@ -37,7 +40,7 @@
   		keywordstyle=\color{blue},        
  		commentstyle=\color{dkgreen},      
         stringstyle=\color{mauve},
-        escapechar=!,
+        escapechar=!
 		}
 
 \newtheorem{prop}{Proposition}
@@ -195,6 +198,7 @@ Puis $S_n = n^2 \alpha(n) = 1/3 n^3 +  1/2 n^2 +  1/6 = \frac{n(n+1)(2n+1)}{6}$
     val print : elem -> string
 	end
 	\end{lstlisting}
+	\newpage
 	\subsubsection*{Utilisation des foncteurs}
 	On prend un module en paramètre pour créer un nouveau module : 
 	\begin{lstlisting}
@@ -204,5 +208,56 @@ Puis $S_n = n^2 \alpha(n) = 1/3 n^3 +  1/2 n^2 +  1/6 = \frac{n(n+1)(2n+1)}{6}$
   	  (* ... *)
   	end
   	\end{lstlisting}
+  	Librairie complète : 450 lignes de code.
+  	\subsection*{Implémentation de l'algorithme à l'aide de cette librairie}
+  	~ 175 lignes de code
+  	\begin{lstlisting}
+open Algebra
+module C = DRing_Rat(* Les rationnels *)
+module Q = Frac(DRing_Rat)(*Les fractions rat.*)
+module Py = Poly(Q.DRing_F) (* Les fractions rationnelles a 2 variables*)
+
+(* 1ière étape : on ecrit R sous la forme : *)
+(* R(X) = p(X)q(X) / p(X-1)r(X) avec pour tout k € N : q(X) ^ r(X+k) = 1 *)
+(* Il faut donc calculer les polynomes p, q, r *)
+
+(* 2ième étape : Majoration du degré de f *)
+
+(* 3ième étape calcul explicite de f(X) *)
+
+let solve R = (* *)
+let solve_q a_n k0 = (* *)
+  	\end{lstlisting}
+  	\newpage
+  	\section*{Exemples}
+  	 	\begin{itemize}
+    		\item $\sum_{k=0}^n k^2$\\
+    		\begin{lstlisting}
+# solve_q ([((1, 1), 2)], [((1,1), 0)]) 0;;
+p =  1x^2
+q =  1
+r =  1
+majoration du degre : 3
+f =  1/6 x +  1/2 x^2 +  1/3 x^3
+Resultat :  1/6 x +  1/2 x^2 +  1/3 x^3
+    		\end{lstlisting}
+    		On a donc $\sum_{k=0}^n k^2 = 1/6 n +  1/2 n^2 +  1/3 n^3 = \frac{n(n+1)(2n+1)}{6}$
+    		
+    		\item $\sum_{k=0}^n \frac{1}{(k+2)(k+5)}$\\
+    		$(k+2)(k+5) = k^2+7k+10$ 
+    		\begin{lstlisting}
+# solve_q ([((1, 1), 0)], [((10,1),0); ((7,1), 1); ((1,1), 2)]) 0;;
+p =  432 +  252x +  36x^2
+q =  -1/6  +  -1/6 x
+r =  -5/6  +  -1/6 x
+majoration du degre : 3
+f =  3384 +  1728x +  216x^2
+Resultat : ( 6 +  323/36 x +  10/3 x^2 +  13/36 x^3)/( 60 +  47x +  12x^2 +  1x^3)
+    		\end{lstlisting}
+    		On a donc $\sum_{k=0}^n \frac{1}{(k+2)(k+5)} = \frac{216+323 n+120 n^2+13 n^3}{36 \left(60+47 n+12 n^2+n^3\right)}$
+    		\item $ \sum_{k=1}^n {\frac{n^3-2n^2-1}{n^4+n^2+1}(n-1)!}$ \\
+    		$\frac{a_n}{a_{n-1}} = \frac{3-6 n+10 n^2-16 n^3+14 n^4-6 n^5+n^6}{-4+3 n-2 n^2+3 n^3-4 n^4+n^5} $ 
+    		\end{itemize}
+
 \end{document}
 

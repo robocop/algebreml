@@ -27,7 +27,8 @@ print_endline (Q.print gR);;
 let rec calcul (p,q,r) gR = 
   (* Pour tout k € N, q(X) et r(X+k) sont premiers entres deux 
   <=> le polynome en Y : R(q(X), r(X+Y)) (résultant par rapport à X) s'anulle dans N *)
-
+  Printf.printf "p = %s\nq = %s\nr = %s\n" (P.print p) (P.print q) (P.print r);
+  flush stdout;
 
   (* Plongement prend un polynome P € Q[X] et le plonge dans (K[Y])[X] *)
   let plongement p = 
@@ -38,30 +39,36 @@ let rec calcul (p,q,r) gR =
   (* Si p ou q est constant, on a fini *)
   if P.degre q = 0 || P.degre r = 0 then (p,q,r)
   else 
+    begin
   (* On construit le polynome r(X+Y) *)
-  let r' = Py.eval_k (plongement r) (P.x, P.one) in
+      let r' = Py.eval_k (plongement r) (P.x, P.one) in
  
   (* On construit le polynome q(X) sur le corps (Q[Y])[X] *)
-  let q' = plongement q in
-  let rat_roots = P.rat_zeros (fst (Py.resultant q' r')) in
+      let q' = plongement q in
+      let resultant = Py.resultant q' r' in
+      print_endline (Q.print resultant);
+      flush stdout;
+      let int_roots = P.int_zeros (fst resultant) in
  
 
   
-  match List.filter natural rat_roots with
-  | [] -> (p,q,r)
-  | (k, _)::_ -> (* q(X) et r(X+k) ne sont pas premiers entres eux *)
-    let r' = P.eval_k r (k,1) in
-    let g = P.gcd q r' in
-    let q2 = fst (P.div_euclide q g) in
-    let r2 = fst (P.div_euclide r (P.eval_k g (-k, 1))) in
+      match int_roots with
+	| [] -> (p,q,r)
+	| (k, _)::_ -> (* q(X) et r(X+k) ne sont pas premiers entres eux *)
+	  begin
+	    let r' = P.eval_k r (k,1) in
+	    let g = P.gcd q r' in
+	    let q2 = fst (P.div_euclide q g) in
+	    let r2 = fst (P.div_euclide r (P.eval_k g (-k, 1))) in
     (* p2 = p(X)g(X)g(X-1)...g(X-k+1) *)
-    let rec prod i = 
-      if i = k then P.one
-      else 
-        P.mult (P.eval_k g (-i, 1)) (prod (i+1))
-    in
-    calcul (P.mult p (prod 0),q2,r2) gR
-    
+	    let rec prod i = 
+	      if i = k then P.one
+	      else 
+		P.mult (P.eval_k g (-i, 1)) (prod (i+1))
+	    in
+	    calcul (P.mult p (prod 0),q2,r2) gR
+	  end
+    end
 ;;
 
 let calcul_pqr gR = calcul (P.one, fst gR, snd gR) gR;;
@@ -89,18 +96,20 @@ let majoration_degre_f (p, q, r) =
   let s_plus = P.add (P.eval_k q C.one) r in
   let s_moins =  P.add (P.eval_k q C.one) (P.minus r) in
   if s_moins <> P.zero then 
-    let d_s_moins = P.degre s_moins in
-    let d_s_plus = P.degre s_plus in
-    if d_s_moins <> (d_s_plus-1) then P.degre p - max d_s_moins (d_s_plus -1)
-    else 
-      let u = P.an s_moins in
-      let v = P.an s_plus in
-      let n0 = C.mult (-2,1) (C.mult u (C.inv v)) in
-      if natural n0 then max (P.degre p - d_s_moins) (fst n0)
-      else P.degre p - d_s_moins
+    begin
+      let d_s_moins = P.degre s_moins in
+      let d_s_plus = P.degre s_plus in
+      if d_s_moins <> (d_s_plus-1) then P.degre p - max d_s_moins (d_s_plus -1)
+      else 
+	let u = P.an s_moins in
+	let v = P.an s_plus in
+	let n0 = C.mult (-2,1) (C.mult u (C.inv v)) in
+	if natural n0 then max (P.degre p - d_s_moins) (fst n0)
+	else P.degre p - d_s_moins
+    end
   else (* si s- = 0 alors s+ <> 0 (sinon r = q = 0) *)
     (* donc deg s-(X) != deg s+(X) - 1 et deg f(X) = 1+deg P(X) - deg s+(X) *)
-    1 + P.degre p - P.degre s_plus 
+    1 + P.degre p - P.degre s_plus
 ;;
 
 
@@ -139,7 +148,10 @@ let make_vector d p () =
 ;;
 let solve gR =
   let p, q, r = calcul_pqr gR in
+  Printf.printf "p = %s\nq = %s\nr = %s\n" (P.print p) (P.print q) (P.print r);
+  flush stdout;
   let d = majoration_degre_f (p, q, r) in
+  Printf.printf "majoration du degre : %d\n" d;
   if d < 0 then None
   else
     let m = make_matrix d (p,q,r) () in 
@@ -153,6 +165,7 @@ let solve gR =
       done;
       (* alpha(X) = q(X+1)/ p(X) * f(X) *)
       let f = P.normalise (!f) in
+      Printf.printf "f = %s\n" (P.print f);
       Some (Q.normalise (P.mult (P.eval_k q C.one) f, p))
    
 ;;
@@ -160,7 +173,7 @@ let solve gR =
 let ($) f x = f x;;
 let print = function
   | None -> print_endline "pas de solution."
-  | Some alpha -> print_endline $ Q.print alpha
+  | Some alpha -> Printf.printf "Resultat : %s" $ Q.print alpha
 ;;
 
 let solve_q a_n k0 = 
@@ -171,20 +184,36 @@ let solve_q a_n k0 =
     | Some q' -> 
       let s =  (Q.mult q' a_n) in
       let s0 = Q.eval s (k0-1, 1) in
-      print_endline $ Q.print (Q.add s (Q.minus ([(s0, 0)], [((1,1), 0)])))
+      Printf.printf "Resultat : %s" $ Q.print (Q.add s (Q.minus ([(s0, 0)], [((1,1), 0)])))
 ;;
-
+(*
 (* Exemple : a_n = n^2 *)
 (* a_n/a_(n-1) = n^2 / (n-1)^2 = R(n) avec R = X^2 / (X-1)^ 2*)
 print $ solve (Q.normalise ([((1, 1), 2)], [((1, 1), 0); ((-2, 1), 1); ((1, 1), 2)]));;
 
 (* On peut aussi utiliser solve_q si a_n est une fraction rationelle en n : solve_q a_n n0 renvoit directement sum k = n0 à n de a_n :  *)
 
-solve_q ([((1, 1), 3)], [((1,1), 0)]) 0;;
+solve_q ([((1, 1), 2)], [((1,1), 0)]) 0;;
 solve_q ([((1, 1), 1)], [((1,1),0)]) 0 ;;
 solve_q ([((1, 1), 0)], [((1,1),2); ((1,1), 1)]) 1;;
-solve_q ([((1, 1), 0)], [((2,1),1); ((3,1), 2); ((1,1), 3)]) 1;;
+solve_q ([((1, 1), 0)], [((10,1),0); ((7,1), 1); ((1,1), 2)]) 0;;
 
+
+
+  let a = ([((10,1),0); ((7,1),1); ((1,1), 2)], P.one);;
+  let b = ([((7,1), 0); ((2,1),1)], P.one);;
+
+  let c = ([((4, 1), 0)], [((1, 1), 0)]);;
+  let d = ([((5, 1), 0)], [((1, 1), 0)]);;
+
+  let m = [|[|c; d; Q.one; Q.zero|];
+	    [|Q.zero; c; d; Q.one|];
+	    [|a; b; Q.one; Q.zero|];
+	    [|Q.zero; a; b; Q.one|]
+	  |];;
+  module MM = Matrix(Q.DRing_F);;
+
+  Q.print (MM.det m);;
 
 
 (* Exemple : a_n = n *)
@@ -209,3 +238,13 @@ print $ solve (Q.normalise ([((2, 1), 1)], [((-1, 1), 0); ((1, 1), 1)]));;
 (* a_n / a_(n-1) = (n-1)(n-2) / n(n-1) = (n^2 - 3n + 2) / (n^2 - n) *)
 print $ solve (Q.normalise ([((2, 1), 0); ((-3, 1), 1); ((1, 1), 2)], [((-1, 1), 1); ((1, 1), 2)]));;
 (* S_n = (1-n)/n*(n-1) = -1/n + C*)
+
+
+
+;;
+
+*)
+  let r = [((3, 1), 0); ((-6, 1), 1); ((10, 1), 2); ((-16,1), 3); ((14,1), 4); ((-6,1),5); ((1,1), 6)], [((-4, 1), 0); ((3, 1), 1); ((-2,1),2); ((3,1), 3); ((-4,1), 4); ((1,1), 5)];;
+Q.print r;;
+
+print $ solve r;;

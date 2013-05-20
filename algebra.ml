@@ -14,6 +14,17 @@ module Integers =
     let rec gcd a b = if a mod b = 0 then b else gcd b (a mod b);;
     let ppcm a b = a * b / (gcd a b)
     let ppcm_list = List.fold_left ppcm 1
+    let pos_div n = 
+      let rec div n k = 
+	if k*k > n then []
+	else 
+	  (if n mod k = 0 then 
+	      if n/k <> k then [k;n/k]
+	      else [k]
+	   else [])@div n (k+1)
+      in
+      div (abs n) 1
+      
     let div n = 
       let rec div n k = 
 	if k*k > n then []
@@ -41,11 +52,19 @@ module Rationnal =
 	  let d = Integers.gcd x' y' in 
 	  ( (s * (x'/d), y'/d) : rat)
      
-      let mult ((x,y):rat) ((x',y'):rat) = normalise (x*x', y*y');;
+      let mult ((x,y):rat) ((x',y'):rat) = 
+	let a = Integers.gcd x y' in
+	let b = Integers.gcd x' y in
+	let nx, ny = x/a, y/b in
+	let nx', ny' = x'/b, y'/a in
+	normalise (nx*nx', ny*ny');;
       let add ((x,y):rat) ((x',y'):rat) = normalise (y'*x+y*x', y*y');;
       let minus ((x,y):rat) = normalise (-x, y);;
       let inv ((x,y):rat) = if x <> 0 then normalise (y,x) else raise Division_by_zero;;
-      let print ((x,y):rat) = Printf.sprintf " %d/%d " x y;;
+      let print ((x,y):rat) = match (x,y) with
+	| (x, 1) -> Printf.sprintf " %d" x;
+	| (x,y) -> Printf.sprintf " %d/%d " x y
+      ;;
     end
 
 module DRing_Rat:DRing with type elem= Rationnal.rat =
@@ -72,12 +91,24 @@ module Matrix0 = functor (C : DRing) ->
     let get (m:t) (i,j) = (m.(i-1)).(j-1)
     let print (m:t) = 
       let p,n = size m in
-      for i = 1 to p do
-	for j = 1 to n do
-	 print_string ((C.print (get m (i,j))) ^ " | ")
+      print_string "{";
+      for i = 1 to p-1 do
+	print_string "{";
+	for j = 1 to n-1 do
+	  print_string ((C.print (get m (i,j))) ^ ", ")
 	done;
+	print_string (C.print (get m (i,n)));
+	print_string " }, ";
 	print_newline();
-      done
+      done;
+      print_string "{";
+      for j = 1 to n-1 do
+	print_string ((C.print (get m (p,j))) ^ ", ")
+      done;
+      print_string (C.print (get m (p,n)));
+      print_string " }}\n"
+    
+
     (* Echange les lignes i et i' *)
     let swap (m:t) (i,i') =
       let tmp = m.(i-1) in
@@ -86,11 +117,15 @@ module Matrix0 = functor (C : DRing) ->
     let copy (m:t) = Array.map Array.copy m
     let map f (m:t)  = Array.map (fun l -> Array.map f l) m
     let det (m:t) = 
-      let rec det' (m:t) k n = 
+      let rec det' res (m:t) k n = 
         (* Si on est sur un bloc 1*1 c'est terminé *)
-	if k = n then get m (n,n)
-	else 
+	if k = n then C.mult res (get m (n,n))
+	else
           begin
+	    print m;
+	    print_newline();
+	    flush stdout;
+	    
 	  (* on trouve le pivot *)
 	    let t = ref false in
 	    let k' = ref k in
@@ -112,7 +147,8 @@ module Matrix0 = functor (C : DRing) ->
 		    m.(i-1).(j-1) <- C.add (get m (i,j)) (C.minus (C.mult alpha (get m (k,j))));
 	          done;
 	        done;
-	        C.mult (if k' - k mod 2 = 0 then p else C.minus p) (det' m (k+1) n)
+	        let r' = C.mult (if k' - k mod 2 = 1 then C.minus p else p) res in
+		(det' r' m (k+1) n)
               end
           end
             
@@ -121,7 +157,7 @@ module Matrix0 = functor (C : DRing) ->
       if p <> n then failwith "echec : matrice non carree"
       else 
 	let nm = copy m in
-	det' nm 1 n
+	det' (C.one) nm 1 n
 	  (* m matrice n*n, v vecteur (v matrice n*1 ) *)
     let forme_echelonnee (m:t) (v:t) = 
       let n, p = size m in
@@ -222,8 +258,8 @@ module Poly = functor ( C : DRing) ->
      let print (p:polynom) = 
        let print_monome (x, d) = match d with
 	 | 0 -> C.print x
-	 | 1 -> Printf.sprintf "%sX" (C.print x)
-	 | d -> Printf.sprintf "%sX^%d" (C.print x) d 
+	 | 1 -> Printf.sprintf "%sx" (C.print x)
+	 | d -> Printf.sprintf "%sx^%d" (C.print x) d 
        in
        let rec print = function
 	 | [] -> ""
@@ -320,6 +356,8 @@ module Poly = functor ( C : DRing) ->
        for l = d2+1 to s do
          copy_ligne l (l-d2) 0 p2;
        done;
+       M.print m;
+       flush stdout;
        M.det m
 
  end 
@@ -337,8 +375,11 @@ module Frac = functor (C : DRing) ->
     let normalise ((p,q):frac) = 
       let p, q = P.normalise p, P.normalise q in
       let a = P.gcd p q in
-      let p', _ = P.div_euclide p a in
-      let q', _ = P.div_euclide q a in
+      let p', q' = 
+      if P.degre a > 0 then 
+        fst (P.div_euclide p a), fst (P.div_euclide q a)
+      else p, q 
+      in
       let e = P.an q' in
       let q'' = List.map (fun (x, d) -> (C.mult (C.inv e) x, d)) q' in
       let p'' = List.map (fun (x, d) -> (C.mult (C.inv e) x, d)) p' in
@@ -349,12 +390,13 @@ module Frac = functor (C : DRing) ->
 
     let print ((p,q):frac) = 
       let a, b = P.print p, P.print q in
+      if q =P.one then a
       (* 
       let n = max (String.length a) (String.length b) in
       let f = String.make n '-' in
       a ^ "\n" ^ f ^ "\n" ^ b 
       *)
-     "[" ^  a ^ "]/[" ^ b ^ "]"
+      else "(" ^  a ^ ")/(" ^ b ^ ")"
     
     let add ((p,q):frac) ((p',q'):frac) = 
       normalise (P.add (P.mult q' p) (P.mult q p'), P.mult q q')
@@ -435,7 +477,15 @@ module P = struct
     let zeros_possibles = couples (Integers.div a0) (Integers.div an) in
     let l = List.filter (fun z -> eval p z = DRing_Rat.zero) zeros_possibles in
     if r = zero then DRing_Rat.zero::l else l
-    
+  let int_zeros (p:polynom) = 
+    let q, r = div_euclide p x in
+    let p = if r = zero then q else p in
+    let g = Integers.ppcm_list (List.map (fun ((p,q),_) -> q) p) in
+    let f x = fst (DRing_Rat.mult x (g,1)) in
+    let a0 = f (a0 p) in
+    let zeros_possibles = Integers.pos_div a0 in
+    let l = List.filter (fun z -> eval p (z,1) = DRing_Rat.zero) zeros_possibles in
+    let l' = if r = zero then 0::l else l in
+    List.map (fun x -> (x,1)) l'
 end
-
-
+;;
